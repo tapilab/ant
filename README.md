@@ -1,2 +1,2 @@
 # ant
-Artist Network Toolkit
+artistic network toolkit
