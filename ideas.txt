@@ -1,0 +1,38 @@
+Just use a normal PSQL backed Django ORM with classes:
+
+EntityType:
+  - name : str
+
+Entity:
+  - EntityType
+  - Value[]
+
+Field:
+  - EntityType
+  - field_name : str
+
+Value:
+  - Field
+  - EntityType
+  - value : str
+
+RelationType
+  - EntityType left
+  - EntityType right
+  - label : str
+  - symmetric : bool
+
+Relation:
+  - RelationType
+  - Entity : left
+  - Entity : right
+
+
+  (artist, name, 'caravaggio')
+  (creator_artist_artwork, 'caravaggio', 'st john the baptist')
+
+
+  (artist, name)
+  (artist, birth_year)
+
+  (creator, artist, artwork, symmetric=False): key=(creator, artist, artwork)

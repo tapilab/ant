@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+  <div class="container">
+
+
+<h2>Entity Types</h2>
+<ul>
+{% for entity_type in entity_types %}
+    <li>{{ entity_type.name }}</li>
+{% endfor %}
+</ul>
+
+
+<h2>Entities</h2>
+<ul>
+{% for entity in entities %}
+    <li>{{ entity.entity_type.name }} - 
+    {% for value in entity.values.all %}
+      {{ value.field.field_name }}: {{ value.value }}
+    {% endfor %}
+    </li>
+{% endfor %}
+</ul>
+</div>
+
+{% endblock %}
