@@ -1,4 +1,7 @@
 django
 gunicorn
 dj_database_url
+django_extensions
+openpyxl
+pandas
 whitenoise

@@ -1,12 +1,17 @@
 from django.db import models
 
 
+
 class EntityType(models.Model):
     name = models.CharField(max_length=255)
+    image_field_name = models.CharField(max_length=255, null=True)
+    title_field_name = models.CharField(max_length=255, null=True)
 
 class Field(models.Model):
     entity_type = models.ForeignKey(EntityType, on_delete=models.CASCADE, blank=False, null=False)    
     field_name = models.CharField(max_length=255)
+    is_image_field = models.BooleanField(null=False, blank=False, default=False)
+    is_title_field = models.BooleanField(null=False, blank=False, default=False)
 
 class Value(models.Model):
     field = models.ForeignKey(Field, on_delete=models.CASCADE, blank=False, null=False)        
@@ -16,6 +21,7 @@ class Value(models.Model):
 
 class Entity(models.Model):
     entity_type = models.ForeignKey(EntityType, on_delete=models.CASCADE, blank=False, null=False)
+    key = models.CharField(max_length=255)
     values = models.ManyToManyField(Value)
 
 class RelationshipType(models.Model):

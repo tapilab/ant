@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block css %}
+<style>
+/* Spinner styles */
+.loader {
+  border: 16px solid #f3f3f3; /* Light grey */
+  border-top: 16px solid #3498db; /* Blue */
+  border-radius: 50%;
+  width: 120px;
+  height: 120px;
+  animation: spin 2s linear infinite;
+  display: none; /* Hidden by default */
+  position: fixed; /* Or absolute */
+  z-index: 1000;
+  left: 50%;
+  top: 50%;
+  margin: -60px 0 0 -60px; /* Center the loader */
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}
+
+
+
+{% block content %}
+<div class="container">
+<h2>Configuration</h2>
+
+Here you can configure the app.
+
+<br>
+
+    <h2>Data URL</h2>
+    To import data from a Google Sheet, enter the URL here.
+    <div class="loader" id="loader"></div>
+    <form method="post" id="config_form">
+        {% csrf_token %}
+        {{ config_form.as_p }}
+        <button type="submit">Submit</button>
+    </form>
+    {% if success %}
+      <p>{{ message }}</p>
+    {% else %}
+      <p style="color: red;">{{ message }}</p>
+    {% endif %}
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script>
+document.getElementById('config_form').addEventListener('submit', function() {
+  // Show the spinner
+  document.getElementById('loader').style.display = 'block';
+
+  // Optional: If you're handling the form submission via Ajax and you want to hide the spinner
+  // once the submission is complete, you would place the hide logic in the Ajax callback.
+  // For a regular form submission that reloads the page or redirects, the spinner will
+  // automatically be hidden as the page reloads.
+});
+</script>
+
+{% endblock %}
+

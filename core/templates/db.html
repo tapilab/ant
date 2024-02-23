@@ -12,11 +12,17 @@
 {% endfor %}
 </ul>
 
+<h2>Relationship Types</h2>
+<ul>
+{% for relationship_type in relationship_types %}
+    <li>{{ relationship_type.source_entity_type.name }} - {{ relationship_type.label }} - {{ relationship_type.target_entity_type.name }}</li>
+{% endfor %}
+</ul>
 
 <h2>Entities</h2>
 <ul>
 {% for entity in entities %}
-    <li>{{ entity.entity_type.name }} - 
+    <li>{{ entity.entity_type.name }} - {{ entity.key}}
     {% for value in entity.values.all %}
       {{ value.field.field_name }}: {{ value.value }}
     {% endfor %}

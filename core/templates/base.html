@@ -40,8 +40,11 @@
         max-width: 100%
     }
 
-
   </style>
+  {% block css %}
+    <!-- Base template's scripts (if any) go here -->
+  {% endblock %}
+
 </head>
 <body>
 <nav class="navbar navbar-default navbar-static-top navbar-inverse">
@@ -79,5 +82,8 @@
 
 {% block content %}{% endblock %}
 
+{% block scripts %}
+  <!-- Base template's scripts (if any) go here -->
+{% endblock %}
 </body>
 </html>

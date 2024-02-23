@@ -1,6 +1,8 @@
 from django.shortcuts import render
 
+from .forms import ConfigForm
 from .models import *
+from .util import import_from_google_sheet
 
 # Create your views here.
 
@@ -25,6 +27,24 @@ def db(request):
 
     # greetings = Greeting.objects.all()
     entity_types = EntityType.objects.all()
+    relationship_types = RelationshipType.objects.all()
     entities = Entity.objects.all()
-    return render(request, "db.html", {"entity_types": entity_types, "entities": entities})
+    return render(request, "db.html",
+        {"entity_types": entity_types, 
+         "relationship_types": relationship_types,
+         "entities": entities})
     # return render(request, "db.html", {"greetings": greetings})
+
+def config(request):
+    if request.method == 'POST':
+        config_form = ConfigForm(request.POST)
+        if config_form.is_valid():
+            # Here, you can process the form data
+            # For now, we'll just redirect to the same page as a simple example
+            url = config_form.cleaned_data['google_sheet_url']
+            success, message = import_from_google_sheet(url)
+            return render(request, 'config.html',
+                {'config_form': config_form, 'success': success, 'message': message})
+    else:
+        config_form = ConfigForm()
+    return render(request, 'config.html', {'config_form': config_form})
