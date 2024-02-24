@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+
+<h2> {{ entity_type}} </h2>
+
+{% for entity in entities %}
+    <li><a href="/entity?type={{ entity_type}}&key={{ entity.key }}">{{ entity.key }}</a></li>
+{% endfor %}
+</ul>
+</div>
+{% endblock %}

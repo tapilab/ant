@@ -29,12 +29,13 @@ def create_relationship_types(sheets, db):
     relationship_types_df = get_sheet_by_name(sheets, 'Relationships')
     relationship_types = defaultdict(lambda: {})
     for i, r in relationship_types_df.iterrows():
+        print(r)
         rt = RelationshipType(source_entity_type=db.entity_types[r['Entity 1']],
                              target_entity_type=db.entity_types[r['Entity 2']],
-                             label=r.Label)
+                             name=r['Name'])
         rt.save()
-        relationship_types[r['Entity 1']][r.Label] = rt
-        print('Added Relationship Type', r['Entity 1'], r.Label)
+        relationship_types[r['Entity 1']][r.Name] = rt
+        print('Added Relationship Type', r['Entity 1'], r.Name)
     return relationship_types
 
 def create_fields(sheets, db):
@@ -52,7 +53,7 @@ def create_fields(sheets, db):
                 print('       skipping relationship', c)
                 continue
             field = Field(entity_type=entity_type,
-                          field_name=c,
+                          name=c,
                           is_image_field=c==entity_type.image_field_name,
                           is_title_field=c==entity_type.title_field_name)
             field.save()        
@@ -69,15 +70,16 @@ def create_entities(sheets, db):
             values = []
             for col, val in row.to_dict().items():
                 if (col in db.relationship_types[entity_type_name] or 
-                    re.match(r'.*\.[0-9]+$', col)): 
+                    re.match(r'.*\.[0-9]+$', col) or col.lower()=='name'): 
                     continue
                 v = Value(field=db.fields[entity_type_name][col], 
                           entity_type=entity_type,
                           value=str(val))
                 v.save()
+                values.append(v)
                 if col.strip().lower() == 'key':
                     key = str(val)
-            entity = Entity(entity_type=entity_type, key=key)
+            entity = Entity(entity_type=entity_type, key=key, name=row['Name'])
             entity.save()
             entity.values.set(values)
             entity.save()
@@ -98,7 +100,7 @@ def create_relationships(sheets, db):
                     relationship_type = db.relationship_types[entity_type_name][col]
                     entity1 = db.entities[entity_type_name][row.Key]
                     entity2_type = relationship_type.target_entity_type.name
-                    print(col, relationship_type.label, entity1.key, entity2_type, val)
+                    print(col, relationship_type.name, entity1.key, entity2_type, val)
                     entity2 = db.entities[entity2_type][val]
                     r = Relationship(relationship_type=relationship_type,
                                      source_entity=entity1,

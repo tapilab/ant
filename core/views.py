@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from collections import defaultdict
 
 from .forms import ConfigForm
 from .models import *
@@ -41,3 +42,33 @@ def config(request):
     else:
         config_form = ConfigForm()
     return render(request, 'config.html', {'config_form': config_form})
+
+
+def entities(request):
+    entity_type = request.GET.get('type', '')  # Default to '' if 'name' is not provided
+
+    return render(request, 'entities.html', {'entity_type': entity_type,
+                  'entities': Entity.objects.filter(entity_type__name=entity_type)}) 
+
+def entity(request):
+    entity_type = request.GET.get('type', '')
+    key = request.GET.get('key', '')
+    entity = Entity.objects.filter(key=key).prefetch_related('values').first()
+    # FIXME: could have a name clash if a field name matches a variable already in this object (e.g., if there's a field name "values")
+    for v in entity.values.all():
+        setattr(entity, v.field.name, v.value)
+
+    # get all related entities.
+    relationships = []
+    rel_types = RelationshipType.objects.filter(source_entity_type__name=entity_type).values_list('name', flat=True)
+    for rel_type in rel_types:
+        relationships.append((rel_type, 
+            [{'name': r.target_entity.name,
+              'key': r.target_entity.key,
+              'entity_type': r.target_entity.entity_type}
+              for r in 
+                    Relationship.objects.filter(source_entity=entity, relationship_type__name=rel_type)]))
+
+    return render(request, 'entity.html', {'entity_type': entity_type,
+                  'entity': entity,
+                  'relationships': relationships}) 

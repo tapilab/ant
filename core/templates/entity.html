@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+
+<h1> {{ entity.name }} </h1>
+
+{% for value in entity.values.all %}
+  <b>{{ value.field.name }}</b>: {{ value.value }}<br>
+{% endfor %}
+
+{% for relationship_type, related_entity in relationships %}
+  <h3>{{ relationship_type }}</h3>
+  {% for r in related_entity %}
+    <a href="/entity?type={{ r.entity_type.name }}&key={{ r.key }}">{{ r.name }}</a>
+  {% endfor %}
+{% endfor %}
+
+</div>
+{% endblock %}
