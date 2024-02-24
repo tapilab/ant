@@ -56,7 +56,10 @@ def entity(request):
     entity = Entity.objects.filter(key=key).prefetch_related('values').first()
     # FIXME: could have a name clash if a field name matches a variable already in this object (e.g., if there's a field name "values")
     for v in entity.values.all():
-        setattr(entity, v.field.name, v.value)
+        if v.field.name == 'Image URL': # FIXME: generalize
+            entity.image_url = v.value
+        else:
+            setattr(entity, v.field.name, v.value)
 
     # get all related entities.
     relationships = []

@@ -7,8 +7,15 @@
 <h1> {{ entity.name }} </h1>
 
 {% for value in entity.values.all %}
-  <b>{{ value.field.name }}</b>: {{ value.value }}<br>
+  {% if value.field.name != "Image URL" %}
+    <b>{{ value.field.name }}</b>: {{ value.value|default_if_none:"" }}
+    <br>
+  {% endif %}
 {% endfor %}
+
+{% if entity.image_url %}
+  <img width="80%" src="{{ entity.image_url }}"/>
+{% endif %}
 
 {% for relationship_type, related_entity in relationships %}
   <h3>{{ relationship_type }}</h3>

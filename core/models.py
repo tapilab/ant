@@ -17,7 +17,7 @@ class Value(models.Model):
     field = models.ForeignKey(Field, on_delete=models.CASCADE, blank=False, null=False)        
     entity_type = models.ForeignKey(EntityType, on_delete=models.CASCADE, blank=False, null=False)    
     # FIXME: all values are big strings for now!!
-    value = models.CharField(max_length=2048)
+    value = models.CharField(max_length=2048, null=True)
 
 class Entity(models.Model):
     entity_type = models.ForeignKey(EntityType, on_delete=models.CASCADE, blank=False, null=False)

@@ -74,7 +74,7 @@ def create_entities(sheets, db):
                     continue
                 v = Value(field=db.fields[entity_type_name][col], 
                           entity_type=entity_type,
-                          value=str(val))
+                          value=str(val) if not pd.isnull(val) else None)
                 v.save()
                 values.append(v)
                 if col.strip().lower() == 'key':
