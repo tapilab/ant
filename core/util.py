@@ -154,9 +154,15 @@ def import_from_google_sheet(url):
     db.entities = create_entities(sheets, db)
     db.relationships = create_relationships(sheets, db)
     print('entities')
-    print(db.entities)
-    print('relationships')
-    print(db.relationships)
+    # for etype in db.entities:
+    #     print(etype, 'entities')
+    #     for e in db.entities[etype]:
+    #         print(e.key)
+    #         for v in e.values:
+    #             print(v.field.name, v.field.value)
+    # print(db.entities)
+    # print('relationships')
+    # print(db.relationships)
     return True, "Success!"
 
 

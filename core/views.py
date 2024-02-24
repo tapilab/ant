@@ -4,8 +4,6 @@ from .forms import ConfigForm
 from .models import *
 from .util import import_from_google_sheet
 
-# Create your views here.
-
 
 def index(request):
     return render(request, "index.html")
@@ -20,27 +18,22 @@ def db(request):
     #      process entry in `Procfile`, git committed your changes and re-deployed the app.
     #
     # When running the app locally:
-    #   1. You have run `./manage.py migrate` to create the `hello_greeting` database table.
+    #   1. You have run `./manage.py migrate` to create the database tables.
 
-    # greeting = Greeting()
-    # greeting.save()
-
-    # greetings = Greeting.objects.all()
     entity_types = EntityType.objects.all()
     relationship_types = RelationshipType.objects.all()
-    entities = Entity.objects.all()
+    entities = Entity.objects.all().prefetch_related('values')
     return render(request, "db.html",
         {"entity_types": entity_types, 
          "relationship_types": relationship_types,
-         "entities": entities})
+         "entities": entities,
+         "values": Value.objects.all()})
     # return render(request, "db.html", {"greetings": greetings})
 
 def config(request):
     if request.method == 'POST':
         config_form = ConfigForm(request.POST)
         if config_form.is_valid():
-            # Here, you can process the form data
-            # For now, we'll just redirect to the same page as a simple example
             url = config_form.cleaned_data['google_sheet_url']
             success, message = import_from_google_sheet(url)
             return render(request, 'config.html',

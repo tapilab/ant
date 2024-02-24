@@ -23,10 +23,20 @@
 <ul>
 {% for entity in entities %}
     <li>{{ entity.entity_type.name }} - {{ entity.key}}
-    {% for value in entity.values.all %}
-      {{ value.field.field_name }}: {{ value.value }}
-    {% endfor %}
+      <ul>
+        {% for value in entity.values.all %}
+          <li>{{ value.field.field_name }}: {{ value.value }}</li>
+        {% endfor %}
+      </ul>
     </li>
+{% endfor %}
+</ul>
+
+<h2>Values</h2>
+<ul>
+{% for value in values %}
+  <li>{{ value.field.field_name }} : {{ value.value }}
+  </li>
 {% endfor %}
 </ul>
 </div>
