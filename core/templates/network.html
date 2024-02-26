@@ -52,194 +52,201 @@
 {% endblock %}
 
 {% block scripts %}
-    <script>
-        const svg = d3.select("#network"),
-            width = svg.node().getBoundingClientRect().width,
-            height = svg.node().getBoundingClientRect().height;
-        console.log('w=' + width + ' h=' + height);
-		var networkData = {{ network_json|safe }};
-		const nodes = networkData.nodes;
-		const links = networkData.links;
+<script>
+    const svg = d3.select("#network"),
+        width = svg.node().getBoundingClientRect().width,
+        height = svg.node().getBoundingClientRect().height;
+	var networkData = {{ network_json|safe }};
+	const nodes = networkData.nodes;
+	const links = networkData.links;
 
-        const network_group = svg.append("g")
-        .attr("id", "network-group");
+    const network_group = svg.append("g")
+    .attr("id", "network-group");
 
-        const link = network_group.append("g")
-            .attr("class", "links")
-            .selectAll("line")
-            .data(links)
-            .enter().append("line")
-            .attr("class", "link")
-            .attr("stroke-width", 2);
+    const link = network_group.append("g")
+        .attr("class", "links")
+        .selectAll("line")
+        .data(links)
+        .enter().append("line")
+        .attr("class", "link")
+        .attr("stroke-width", 2);
 
-        const node = network_group.append("g")
-            .attr("class", "nodes")
-            .selectAll("circle")
-            .data(nodes)
-            .enter().append("circle")
-            .attr("class", "node")
-            .attr("r", 8)
-            .attr("fill", d => d.color)
-            .on("mouseover", showTooltip)
-            .on("mouseout", hideTooltip)
-            .on("click", handleClick);
+    const node = network_group.append("g")
+        .attr("class", "nodes")
+        .selectAll("circle")
+        .data(nodes)
+        .enter().append("circle")
+        .attr("class", "node")
+        .attr("r", 8)
+        .attr("fill", d => d.color)
+        .on("mouseover", showTooltip)
+        .on("mouseout", hideTooltip)
+        .on("click", handleClick);
 
-        const simulation = d3.forceSimulation(nodes)
-            .force("link", d3.forceLink(links).id(d => d.id).distance(100))
-            .force("charge", d3.forceManyBody().strength(-100))
-            // .force("center", d3.forceCenter(svg.clientWidth / 2, svg.clientHeight / 2));
-            .force("center", d3.forceCenter(width / 2, height / 2));
+    const simulation = d3.forceSimulation(nodes)
+        .force("link", d3.forceLink(links).id(d => d.id).distance(100))
+        .force("charge", d3.forceManyBody().strength(-100))
+        // .force("center", d3.forceCenter(svg.clientWidth / 2, svg.clientHeight / 2));
+        .force("center", d3.forceCenter(width / 2, height / 2));
 
-        simulation.on("tick", () => {
-            link
-                .attr("x1", d => d.source.x)
-                .attr("y1", d => d.source.y)
-                .attr("x2", d => d.target.x)
-                .attr("y2", d => d.target.y);
+    simulation.on("tick", () => {
+        link
+            .attr("x1", d => d.source.x)
+            .attr("y1", d => d.source.y)
+            .attr("x2", d => d.target.x)
+            .attr("y2", d => d.target.y);
 
-            node
-                .attr("cx", d => d.x)
-                .attr("cy", d => d.y);
-        });
+        node
+            .attr("cx", d => d.x)
+            .attr("cy", d => d.y);
+    });
 
-        function showTooltip(event, d) {
-            const tooltip = d3.select("#mytooltip");
-            const tooltipImage = d3.select("#mytooltipImage");
-            const tooltipText = d3.select("#mytooltipText");
+    function showTooltip(event, d) {
+        const tooltip = d3.select("#mytooltip");
+        const tooltipImage = d3.select("#mytooltipImage");
+        const tooltipText = d3.select("#mytooltipText");
 
-            tooltipText.text(d.name);
+        tooltipText.text(d.name);
 
-			if (d.image_url) {
-		        tooltipImage.style("display", "block")
-		                     .attr("src", d.image_url);
-			} else {
-		        tooltipImage.style("display", "none");
-			}
+		if (d.image_url) {
+	        tooltipImage.style("display", "block")
+	                     .attr("src", d.image_url);
+		} else {
+	        tooltipImage.style("display", "none");
+		}
 
-            tooltip.style("display", "block")
-                .style("left", (event.pageX + 10) + "px")
-                .style("top", (event.pageY - 20) + "px");
+        tooltip.style("display", "block")
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 20) + "px");
+    }
+
+    function hideTooltip() {
+        d3.select("#mytooltip").style("display", "none");
+    }
+
+
+    // Add a click event listener to the SVG canvas
+    svg.on("click", () => {
+        // Remove the highlighted class from all nodes
+        node.classed("highlighted", false);
+    });
+
+    // Define the handleClick function
+    function handleClick(event, clickedNode) {
+        // Check if the clicked node is already highlighted
+        const isHighlighted = d3.select(this).classed("highlighted");
+        // Get the IDs of connected nodes
+        const connectedNodeIds = links
+            .filter(link => link.source === clickedNode || link.target === clickedNode)
+            .map(link => link.source === clickedNode ? link.target.id : link.source.id);
+        if (isHighlighted) {
+            // Remove highlighting from this node and connected
+            d3.select(this).classed("highlighted", false);
+            node.filter(d => connectedNodeIds.includes(d.id))
+                .classed("highlighted", false);
+        } else {
+            // Remove highlighting from previously clicked nodes (if any)
+            d3.selectAll(".highlighted").classed("highlighted", false);
+
+            // Highlight the clicked node
+            d3.select(this).classed("highlighted", true);
+
+            // Highlight the connected nodes
+            node.filter(d => connectedNodeIds.includes(d.id))
+                .classed("highlighted", true);
         }
+        // Prevent propagation of the click event to the SVG canvas
+        event.stopPropagation();                
+    }
 
-        function hideTooltip() {
-            d3.select("#mytooltip").style("display", "none");
-        }
+    // Create a zoom behavior
+    const zoom = d3.zoom()
+        .scaleExtent([0.2, 4]) // Limit zoom scale
+        .on("zoom", zoomed);
 
+    // Apply zoom behavior to the SVG element
 
-        // Add a click event listener to the SVG canvas
-        svg.on("click", () => {
-            // Remove the highlighted class from all nodes
-            node.classed("highlighted", false);
-        });
+    // Define the zoomed function to handle zooming and panning
+    function zoomed(event) {
+        const { transform } = event;
+        // Apply the zoom transformation to the network-group
+        // Access the zoom scale (k)
+        // const zoomScale = transform.k;
+        // console.log('zs=' + zoomScale);
+        d3.select('#network-group')
+        .attr("transform", transform)
+    }
 
-        // Define the handleClick function
-        function handleClick(event, clickedNode) {
-            // Check if the clicked node is already highlighted
-            const isHighlighted = d3.select(this).classed("highlighted");
-            // Get the IDs of connected nodes
-            const connectedNodeIds = links
-                .filter(link => link.source === clickedNode || link.target === clickedNode)
-                .map(link => link.source === clickedNode ? link.target.id : link.source.id);
-            if (isHighlighted) {
-                // Remove highlighting from this node and connected
-                d3.select(this).classed("highlighted", false);
-                node.filter(d => connectedNodeIds.includes(d.id))
-                    .classed("highlighted", false);
-            } else {
-                // Remove highlighting from previously clicked nodes (if any)
-                d3.selectAll(".highlighted").classed("highlighted", false);
+    // Function to filter nodes based on search query
+    function filterNodes(searchQuery) {
+        if (searchQuery) {
+            const filteredNodes = nodes.filter(node => node.name.toLowerCase().includes(searchQuery.toLowerCase()));
+            const filteredNodeIds = filteredNodes.map(node => node.id);
 
-                // Highlight the clicked node
-                d3.select(this).classed("highlighted", true);
-
-                // Highlight the connected nodes
-                node.filter(d => connectedNodeIds.includes(d.id))
-                    .classed("highlighted", true);
-            }
-            // Prevent propagation of the click event to the SVG canvas
-            event.stopPropagation();                
-        }
-
-        // Create a zoom behavior
-        const zoom = d3.zoom()
-            .scaleExtent([0.2, 4]) // Limit zoom scale
-            .on("zoom", zoomed);
-
-        // Apply zoom behavior to the SVG element
-
-        // Define the zoomed function to handle zooming and panning
-        function zoomed(event) {
-            const { transform } = event;
-            // Apply the zoom transformation to the entire SVG group
-            // svg.attr("transform", transform);
+            // Update node selection to display only filtered nodes
+            // ... or just highlight them.            
+            node.classed("highlighted", d => filteredNodeIds.includes(d.id));
+            // Recenter plot
+            const translateX = width / 2 - filteredNodes[0].x; // Adjust to center horizontally
+            const translateY = height / 2 - filteredNodes[0].y; // Adjust to center vertically
+            // Apply the translation transform to the SVG container
             d3.select('#network-group')
-            .attr("transform", transform)
-            // svg.attr("transform", transform)
-            // console.log(transform)
+            .attr("transform", `translate(${translateX}, ${translateY})`);
+
+            // node
+            //     .style("display", d => filteredNodeIds.includes(d.id) ? "block" : "none");
+
+            // // Update link selection to display only links connected to filtered nodes
+            // link
+            //     .style("display", d => filteredNodeIds.includes(d.source.id) && filteredNodeIds.includes(d.target.id) ? "block" : "none");
+        } else {
+            node.classed("highlighted", false);
         }
-        svg.call(zoom);
+    }
 
-        // Function to filter nodes based on search query
-        function filterNodes(searchQuery) {
-            if (searchQuery) {
-                const filteredNodes = nodes.filter(node => node.name.toLowerCase().includes(searchQuery.toLowerCase()));
-                const filteredNodeIds = filteredNodes.map(node => node.id);
+    function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    }
+    // Event listener for search input field
+    document.getElementById("searchInput").addEventListener("input", function() {
+        const searchQuery = this.value.trim();
+        filterNodes(searchQuery);
+    });
 
-                // Update node selection to display only filtered nodes
-                // ... or just highlight them.            
-                node.classed("highlighted", d => filteredNodeIds.includes(d.id));
-                // node
-                //     .style("display", d => filteredNodeIds.includes(d.id) ? "block" : "none");
+    // Initialize autocomplete for the search input field
+    $(function() {
+        const searchTerm = getQueryParam("search"); // Get search term from URL query parameter
 
-                // // Update link selection to display only links connected to filtered nodes
-                // link
-                //     .style("display", d => filteredNodeIds.includes(d.source.id) && filteredNodeIds.includes(d.target.id) ? "block" : "none");
-            } else {
-                node.classed("highlighted", false);
+        // Initialize autocomplete
+        $("#searchInput").autocomplete({
+            source: function(request, response) {
+                const term = request.term.toLowerCase();
+                const filteredNodes = nodes.filter(node => node.name.toLowerCase().includes(term));
+                const nodeNames = filteredNodes.map(node => node.name);
+                response(nodeNames);
+            },
+            minLength: 1,
+            select: function(event, ui) {
+                const selectedNodeName = ui.item.value;
+                filterNodes(selectedNodeName);
             }
-        }
+        });
 
-        function getQueryParam(param) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(param);
-        }
-        // Event listener for search input field
-        document.getElementById("searchInput").addEventListener("input", function() {
-            const searchQuery = this.value.trim();
+        // Set search input field value
+        $("#searchInput").val(searchTerm);
+
+        // Manually trigger filtering based on search query
+        filterNodes(searchTerm);
+
+        // Event listener for input event on search input field
+        $("#searchInput").on("input", function() {
+            const searchQuery = $(this).val().trim();
             filterNodes(searchQuery);
         });
+    });        
+    svg.call(zoom);
 
-        // Initialize autocomplete for the search input field
-        $(function() {
-            const searchTerm = getQueryParam("search"); // Get search term from URL query parameter
 
-            // Initialize autocomplete
-            $("#searchInput").autocomplete({
-                source: function(request, response) {
-                    const term = request.term.toLowerCase();
-                    const filteredNodes = nodes.filter(node => node.name.toLowerCase().includes(term));
-                    const nodeNames = filteredNodes.map(node => node.name);
-                    response(nodeNames);
-                },
-                minLength: 1,
-                select: function(event, ui) {
-                    const selectedNodeName = ui.item.value;
-                    filterNodes(selectedNodeName);
-                }
-            });
-
-            // Set search input field value
-            $("#searchInput").val(searchTerm);
-
-            // Manually trigger filtering based on search query
-            filterNodes(searchTerm);
-
-            // Event listener for input event on search input field
-            $("#searchInput").on("input", function() {
-                const searchQuery = $(this).val().trim();
-                filterNodes(searchQuery);
-            });
-        });        
-
-    </script>
+</script>
 {% endblock %}
