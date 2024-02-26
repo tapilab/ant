@@ -180,7 +180,7 @@ def import_from_google_sheet(url):
     db.entities = create_entities(sheets, db)
     db.relationships = create_relationships(sheets, db)
     print('entities')
-    Graph(compressed_json=gzip.compress(db2json())).save()
+    Network(compressed_json=gzip.compress(db2json())).save()
     return True, "Success!"
 
 

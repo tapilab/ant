@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% load static %}
+{% block css %}
+    <style>
+        .node {
+            stroke: #fff;
+            stroke-width: 2px;
+        }
+        
+        .link {
+            stroke: #999;
+            stroke-opacity: 0.6;
+        }
+        
+        .mytooltip {
+            position: absolute;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 5px;
+            display: none;
+            max-width: 200px; /* Set maximum width here */
+        }
+        .highlighted {
+            /* fill: yellow; /* Change the fill color to highlight */
+            stroke: black;
+            stroke-width: 4px;
+            r: 10;
+        }        
+    </style>
+{% endblock %}
+
+{% block content %}
+    <svg id="network" width="800" height="600"></svg>
+    <div id="mytooltip" class="mytooltip">
+        <div id="mytooltipText"></div>
+    	<img id="mytooltipImage" src="" alt="Tooltip Image" style="max-width: 100px; max-height: 100px;">
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        const svg = d3.select("#network"),
+            width = +svg.attr("width"),
+            height = +svg.attr("height");
+
+		var networkData = {{ network_json|safe }};
+		const nodes = networkData.nodes;
+		const links = networkData.links;
+
+        const link = svg.append("g")
+            .attr("class", "links")
+            .selectAll("line")
+            .data(links)
+            .enter().append("line")
+            .attr("class", "link")
+            .attr("stroke-width", 2);
+
+        const node = svg.append("g")
+            .attr("class", "nodes")
+            .selectAll("circle")
+            .data(nodes)
+            .enter().append("circle")
+            .attr("class", "node")
+            .attr("r", 8)
+            .attr("fill", d => d.color)
+            .on("mouseover", showTooltip)
+            .on("mouseout", hideTooltip)
+            .on("click", handleClick);
+
+        node.append("title")
+            .text(d => d.name);
+
+        const simulation = d3.forceSimulation(nodes)
+            .force("link", d3.forceLink(links).id(d => d.id).distance(100))
+            .force("charge", d3.forceManyBody().strength(-100))
+            .force("center", d3.forceCenter(width / 2, height / 2));
+
+        simulation.on("tick", () => {
+            link
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+
+            node
+                .attr("cx", d => d.x)
+                .attr("cy", d => d.y);
+        });
+
+        function showTooltip(event, d) {
+            const tooltip = d3.select("#mytooltip");
+            const tooltipImage = d3.select("#mytooltipImage");
+            const tooltipText = d3.select("#mytooltipText");
+
+            tooltipText.text(d.name);
+
+			if (d.image_url) {
+		        tooltipImage.style("display", "block")
+		                     .attr("src", d.image_url);
+			} else {
+		        tooltipImage.style("display", "none");
+			}
+
+            tooltip.style("display", "block")
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 20) + "px");
+        }
+
+        function hideTooltip() {
+            d3.select("#mytooltip").style("display", "none");
+        }
+
+
+        // Add a click event listener to the SVG canvas
+        svg.on("click", () => {
+            // Remove the highlighted class from all nodes
+            node.classed("highlighted", false);
+        });
+
+        // Define the handleClick function
+        function handleClick(event, clickedNode) {
+            // Check if the clicked node is already highlighted
+            const isHighlighted = d3.select(this).classed("highlighted");
+            // Get the IDs of connected nodes
+            const connectedNodeIds = links
+                .filter(link => link.source === clickedNode || link.target === clickedNode)
+                .map(link => link.source === clickedNode ? link.target.id : link.source.id);
+            if (isHighlighted) {
+                // Remove highlighting from this node and connected
+                d3.select(this).classed("highlighted", false);
+                node.filter(d => connectedNodeIds.includes(d.id))
+                    .classed("highlighted", false);
+            } else {
+                // Remove highlighting from previously clicked nodes (if any)
+                d3.selectAll(".highlighted").classed("highlighted", false);
+
+                // Highlight the clicked node
+                d3.select(this).classed("highlighted", true);
+
+                // Highlight the connected nodes
+                node.filter(d => connectedNodeIds.includes(d.id))
+                    .classed("highlighted", true);
+            }
+            // Prevent propagation of the click event to the SVG canvas
+            event.stopPropagation();                
+        }
+        // Zooming behaves strangely...network shoots off the screen sometimes.
+        // Create a zoom behavior
+        // const zoom = d3.zoom()
+        //     .scaleExtent([0.3, 10]) // Set the scale extent to restrict zooming range
+        //     .extent([[0, 0], [width, height]]) // Set the extent of the zoom behavior
+        //     .on("zoom", zoomed); // Define the zoom event handler
+
+        // Apply the zoom behavior to the SVG container
+        // svg.call(zoom);
+
+        // Define the zoomed function to handle zoom events
+        // function zoomed(event) {
+        //     // Get the current transform
+        //     // const { transform } = event;
+        //     // Update the transform attribute of the SVG container
+        //     svg.attr("transform", event.transform);
+        //     // // Constrain panning within the bounds of the SVG canvas
+        //     // const { x, y, k } = transform;
+        //     // svg.selectAll(".nodes, .links")
+        //     //     .attr("transform", `translate(${Math.min(0, Math.max(width * (1 - k), x))},${Math.min(0, Math.max(height * (1 - k), y))}) scale(${k})`);            
+        // }
+
+
+
+    </script>
+{% endblock %}

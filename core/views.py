@@ -76,6 +76,6 @@ def entity(request):
                   'entity': entity,
                   'relationships': relationships}) 
 
-def graph(request):
-    return render(request, 'graph.html',
-        {'graph_json': Graph.objects.first().get_json()})
+def network(request):
+    return render(request, 'network.html',
+        {'network_json': Network.objects.first().get_json()})
