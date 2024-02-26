@@ -8,6 +8,8 @@
 
 <a href="/network/?search={{ entity.name }}"><span class="fa fa-share-alt"></span> Network </a><br>
 
+<b>Entity Type</b>: {{ entity.entity_type.name }}<br>
+
 {% for value in entity.values.all %}
   {% if value.field.name != "Image URL" %}
     <b>{{ value.field.name }}</b>: {{ value.value|default_if_none:"" }}
@@ -23,6 +25,7 @@
   <h3>{{ relationship_type }}</h3>
   {% for r in related_entity %}
     <a href="/entity?type={{ r.entity_type.name }}&key={{ r.key }}">{{ r.name }}</a>
+    {% if not forloop.last %} | {% endif %}
   {% endfor %}
 {% endfor %}
 

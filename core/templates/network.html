@@ -22,14 +22,18 @@
         }
         .highlighted {
             /* fill: yellow; /* Change the fill color to highlight */
-            stroke: black;
+            stroke: yellow;
             stroke-width: 4px;
-            r: 20;
+            r: 12;
         }        
+        .highlighted_link {
+            stroke: yellow; /* Change the color to a desired color */
+            stroke-width: 10px; /* Increase the width to a desired value */
+        }
         #searchContainer {
             position: absolute;
             top: 100px; /* Adjust the top position as needed */
-            left: 30vw; /* Adjust the left position as needed */
+            left: 10vw; /* Adjust the left position as needed */
             z-index: 500; /* Ensure the search input is above other elements */
         }    
         svg {
@@ -149,52 +153,57 @@
     svg.on("click", () => {
         // Remove the highlighted class from all nodes
         node.classed("highlighted", false);
+        link.classed("highlighted_link", false);
     });
 
     // Define the handleClick function
     function handleClick(event, clickedNode) {
         // Check if the clicked node is already highlighted
-        const isHighlighted = d3.select(this).classed("highlighted");
+        // const isHighlighted = d3.select(this).classed("highlighted");
         // Get the IDs of connected nodes
         const connectedNodeIds = links
             .filter(link => link.source === clickedNode || link.target === clickedNode)
             .map(link => link.source === clickedNode ? link.target.id : link.source.id);
-        if (isHighlighted) {
-            // Remove highlighting from this node and connected
-            d3.select(this).classed("highlighted", false);
-            node.filter(d => connectedNodeIds.includes(d.id))
-                .classed("highlighted", false);
-        } else {
-            // Remove highlighting from previously clicked nodes (if any)
-            d3.selectAll(".highlighted").classed("highlighted", false);
+        // if (isHighlighted) {
+        //     // Remove highlighting from this node and connected
+        //     d3.select(this).classed("highlighted", false);
+        //     node.filter(d => connectedNodeIds.includes(d.id))
+        //         .classed("highlighted", false);
+        // } else {
+        // Remove highlighting from previously clicked nodes (if any)
+        d3.selectAll(".highlighted").classed("highlighted", false);
 
-            // Highlight the clicked node
-            d3.select(this).classed("highlighted", true);
+        // Highlight the clicked node
+        d3.select(this).classed("highlighted", true);
 
-            // Highlight the connected nodes
-            node.filter(d => connectedNodeIds.includes(d.id))
-                .classed("highlighted", true);
+        // Highlight the connected nodes
+        node.filter(d => connectedNodeIds.includes(d.id))
+            .classed("highlighted", true);
+        // Highlight links
+        connectedNodeIds.push(clickedNode);        
+        link.classed("highlighted_link", d=> (connectedNodeIds.includes(d.source.id) && d.target.id==clickedNode.id) || 
+                                             (d.source.id==clickedNode.id && connectedNodeIds.includes(d.target.id)));   
 
-            // Recenter on clicked node
-            // Obtain the position of the clicked node
-            const centerX = clickedNode.x; // X-coordinate of the clicked node
-            const centerY = clickedNode.y; // Y-coordinate of the clicked node
 
-            // Calculate the translation values to center the clicked node
-            const translateX = (width / 2 - centerX);// * zoomScale; // Adjust to center horizontally
-            const translateY = (height / 2 - centerY);// * zoomScale; // Adjust to center vertically
+        // Recenter on clicked node
+        // Obtain the position of the clicked node
+        const centerX = clickedNode.x; // X-coordinate of the clicked node
+        const centerY = clickedNode.y; // Y-coordinate of the clicked node
 
-            // Apply the translation transform to the SVG container
-            d3.select('#network-group').transition()
-                .duration(500) // Optional: Define the transition duration
-                .attr("transform", `translate(${translateX}, ${translateY})`);
+        // Calculate the translation values to center the clicked node
+        const translateX = (width / 2 - centerX);// * zoomScale; // Adjust to center horizontally
+        const translateY = (height / 2 - centerY);// * zoomScale; // Adjust to center vertically
 
-            // Update the details div.
-            node2html(clickedNode, function(htmlContent) {
-                d3.select("#details")
-                .html(htmlContent);                    
-            });
-        }
+        // Apply the translation transform to the SVG container
+        d3.select('#network-group').transition()
+            .duration(500) // Optional: Define the transition duration
+            .attr("transform", `translate(${translateX}, ${translateY})`);
+
+        // Update the details div.
+        node2html(clickedNode, function(htmlContent) {
+            d3.select("#details")
+            .html(htmlContent);                    
+        });
         // Prevent propagation of the click event to the SVG canvas
         event.stopPropagation();                
     }
@@ -225,7 +234,7 @@
     }
     // Create a zoom behavior
     const zoom = d3.zoom()
-        .scaleExtent([0.2, 4]) // Limit zoom scale
+        .scaleExtent([0.1, 4]) // Limit zoom scale
         .on("zoom", zoomed);
 
     // Apply zoom behavior to the SVG element
@@ -250,6 +259,7 @@
             // Update node selection to display only filtered nodes
             // ... or just highlight them.            
             node.classed("highlighted", d => filteredNodeIds.includes(d.id));
+            // link.classed("highlighted_link", d=> filteredNodeIds.includes(d.source.id) && filteredNodeIds.includes(d.target.id))   
             // Recenter plot
             const translateX = width / 2 - filteredNodes[0].x; // Adjust to center horizontally
             const translateY = height / 2 - filteredNodes[0].y; // Adjust to center vertically

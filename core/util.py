@@ -86,7 +86,7 @@ def create_entities(sheets, db):
                 entity.save()
                 entity.values.set(values)
                 entity.save()
-                entities[entity_type_name][key] = entity    
+                entities[entity_type_name][key.lower()] = entity    
     return entities
 
 def create_relationships(sheets, db):
@@ -103,16 +103,16 @@ def create_relationships(sheets, db):
                     if col in db.relationship_types[entity_type_name]:
                         try:
                             relationship_type = db.relationship_types[entity_type_name][col]
-                            entity1 = db.entities[entity_type_name][row.Key]
-                            entity2_type = relationship_type.target_entity_type.name
+                            entity1 = db.entities[entity_type_name][row.Key.lower()]
+                            entity2_type = relationship_type.target_entity_type.name.strip()
                             print(col, relationship_type.name, entity1.key, entity2_type, val)
-                            entity2 = db.entities[entity2_type][val]
+                            entity2 = db.entities[entity2_type][val.lower()]
                             r = Relationship(relationship_type=relationship_type,
                                              source_entity=entity1,
                                              target_entity=entity2).save()    
                             relationships[col] = r
                         except Exception as e:
-                            raise ValueError('Cannot add relationship from row %s\n%s' % (row, str(e)))
+                            raise ValueError('Cannot add relationship for %s from row %s\n%s' % (entity_type_name, row, str(e)))
     return relationships
     
 
@@ -176,6 +176,9 @@ def import_from_google_sheet(url):
     clear_db()
     try:
         sheets = pd.read_excel(id2export_url(url2doc_id(url)), sheet_name=None)
+        # remove all leading/trailing spaces everywhere.
+        for s, df in sheets.items():
+            sheets[s] = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
     except:
         return False, "Cannot find a sheet at that URL. Please navigate to the page of the Google sheet and copy the URL in your browser's address bar."
     
