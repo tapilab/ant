@@ -75,3 +75,7 @@ def entity(request):
     return render(request, 'entity.html', {'entity_type': entity_type,
                   'entity': entity,
                   'relationships': relationships}) 
+
+def graph(request):
+    return render(request, 'graph.html',
+        {'graph_json': Graph.objects.first().get_json()})

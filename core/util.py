@@ -1,6 +1,7 @@
 from collections import defaultdict
 from django.apps import apps
 from .models import *
+import json
 import pandas as pd
 import re
 
@@ -19,7 +20,7 @@ def create_entity_types(sheets):
     entity_types = {}
     for i, e in entity_types_df.iterrows():
         name = e.Type
-        e = EntityType(name=name)
+        e = EntityType(name=name, color=e.Color)
         e.save()
         entity_types[name] = e
         print('Added Entity Type', name)
@@ -139,6 +140,29 @@ def get_sheet_by_name(sheets, name):
             return sheet
     return None
 
+
+def db2json():
+    nodes = []
+    for e in Entity.objects.all():
+        nodes.append({
+            'id': e.pk,
+            'key': e.key,
+            'name': e.name,
+            'entity_type': e.entity_type.name,
+            'color': e.entity_type.color,
+            'image_url': e.get_value('Image URL')
+        })
+    links = []
+    for r in Relationship.objects.all():
+        links.append({
+            'source': r.source_entity.pk,
+            'target': r.target_entity.pk,
+            'relationship_type': r.relationship_type.name,
+            'value': 1
+        })
+    return json.dumps({'nodes': nodes, 'links': links}).encode('utf-8')
+
+
 def import_from_google_sheet(url):
     """
     Import all data from the google sheet at the provided url.
@@ -156,15 +180,7 @@ def import_from_google_sheet(url):
     db.entities = create_entities(sheets, db)
     db.relationships = create_relationships(sheets, db)
     print('entities')
-    # for etype in db.entities:
-    #     print(etype, 'entities')
-    #     for e in db.entities[etype]:
-    #         print(e.key)
-    #         for v in e.values:
-    #             print(v.field.name, v.field.value)
-    # print(db.entities)
-    # print('relationships')
-    # print(db.relationships)
+    Graph(compressed_json=gzip.compress(db2json())).save()
     return True, "Success!"
 
 

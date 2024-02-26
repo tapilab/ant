@@ -1,11 +1,14 @@
 from django.db import models
-
+import gzip
+import json
 
 
 class EntityType(models.Model):
     name = models.CharField(max_length=255)
     image_field_name = models.CharField(max_length=255, null=True)
     title_field_name = models.CharField(max_length=255, null=True)
+    color = models.CharField(max_length=255)
+
 
 class Field(models.Model):
     entity_type = models.ForeignKey(EntityType, on_delete=models.CASCADE, blank=False, null=False)    
@@ -25,6 +28,16 @@ class Entity(models.Model):
     key = models.CharField(max_length=255)
     values = models.ManyToManyField(Value)
 
+    def get_value(self, field_name):
+        vs = self.get_values(field_name)
+        if len(vs) > 0:
+            return vs[0]
+        else:
+            return ''
+
+    def get_values(self, field_name):
+        return self.values.filter(field__name=field_name).values_list('value', flat=True)        
+
 class RelationshipType(models.Model):
     source_entity_type = models.ForeignKey(EntityType, related_name='source_relationship_type_set', on_delete=models.CASCADE, blank=False, null=False)    
     target_entity_type = models.ForeignKey(EntityType, related_name='target_relationship_type_set', on_delete=models.CASCADE, blank=False, null=False)    
@@ -35,3 +48,11 @@ class Relationship(models.Model):
     relationship_type = models.ForeignKey(RelationshipType, on_delete=models.CASCADE, blank=False, null=False)        
     source_entity = models.ForeignKey(Entity, related_name='source_relationship_set', on_delete=models.CASCADE, blank=False, null=False)    
     target_entity = models.ForeignKey(Entity, related_name='target_relationship_set', on_delete=models.CASCADE, blank=False, null=False)    
+
+
+class Graph(models.Model):
+    compressed_json = models.BinaryField()
+
+    def get_json(self):
+        return json.loads(gzip.decompress(self.compressed_json))
+
