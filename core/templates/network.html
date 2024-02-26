@@ -26,10 +26,19 @@
             stroke-width: 4px;
             r: 10;
         }        
+        #searchContainer {
+            position: absolute;
+            top: 100px; /* Adjust the top position as needed */
+            left: 50px; /* Adjust the left position as needed */
+            z-index: 500; /* Ensure the search input is above other elements */
+        }        
     </style>
 {% endblock %}
 
 {% block content %}
+    <div id="searchContainer">
+        <input type="text" id="searchInput" placeholder="Search for nodes...">
+    </div>
     <svg id="network" width="800" height="600"></svg>
     <div id="mytooltip" class="mytooltip">
         <div id="mytooltipText"></div>
@@ -144,6 +153,27 @@
             // Prevent propagation of the click event to the SVG canvas
             event.stopPropagation();                
         }
+
+        // Function to filter nodes based on search query
+        function filterNodes(searchQuery) {
+            const filteredNodes = nodes.filter(node => node.name.toLowerCase().includes(searchQuery.toLowerCase()));
+            const filteredNodeIds = filteredNodes.map(node => node.id);
+
+            // Update node selection to display only filtered nodes
+            node
+                .style("display", d => filteredNodeIds.includes(d.id) ? "block" : "none");
+
+            // Update link selection to display only links connected to filtered nodes
+            link
+                .style("display", d => filteredNodeIds.includes(d.source.id) && filteredNodeIds.includes(d.target.id) ? "block" : "none");
+        }
+
+        // Event listener for search input field
+        document.getElementById("searchInput").addEventListener("input", function() {
+            const searchQuery = this.value.trim();
+            filterNodes(searchQuery);
+        });
+        
         // Zooming behaves strangely...network shoots off the screen sometimes.
         // Create a zoom behavior
         // const zoom = d3.zoom()
@@ -165,7 +195,24 @@
         //     // svg.selectAll(".nodes, .links")
         //     //     .attr("transform", `translate(${Math.min(0, Math.max(width * (1 - k), x))},${Math.min(0, Math.max(height * (1 - k), y))}) scale(${k})`);            
         // }
-
+    $(function() {
+        $("#searchInput").autocomplete({
+            source: function(request, response) {
+                // Filter nodes based on search input
+                const term = request.term.toLowerCase();
+                const filteredNodes = nodes.filter(node => node.name.toLowerCase().includes(term));
+                const nodeNames = filteredNodes.map(node => node.name);
+                response(nodeNames);
+            },
+            minLength: 1, // Minimum characters before triggering autocomplete
+            select: function(event, ui) {
+                // Handle selection of autocomplete suggestion
+                const selectedNodeName = ui.item.value;
+                // Filter nodes based on selected node name and update visualization
+                filterNodes(selectedNodeName);
+            }
+        });
+    });
 
 
     </script>
