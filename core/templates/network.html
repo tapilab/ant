@@ -24,7 +24,7 @@
             /* fill: yellow; /* Change the fill color to highlight */
             stroke: black;
             stroke-width: 4px;
-            r: 10;
+            r: 20;
         }        
         #searchContainer {
             position: absolute;
@@ -156,64 +156,62 @@
 
         // Function to filter nodes based on search query
         function filterNodes(searchQuery) {
+            console.log('filter. search='+searchQuery)
             const filteredNodes = nodes.filter(node => node.name.toLowerCase().includes(searchQuery.toLowerCase()));
             const filteredNodeIds = filteredNodes.map(node => node.id);
 
             // Update node selection to display only filtered nodes
-            node
-                .style("display", d => filteredNodeIds.includes(d.id) ? "block" : "none");
+            // ... or just highlight them.            
+            node.classed("highlighted", d => filteredNodeIds.includes(d.id));
+            // node
+            //     .style("display", d => filteredNodeIds.includes(d.id) ? "block" : "none");
 
-            // Update link selection to display only links connected to filtered nodes
-            link
-                .style("display", d => filteredNodeIds.includes(d.source.id) && filteredNodeIds.includes(d.target.id) ? "block" : "none");
+            // // Update link selection to display only links connected to filtered nodes
+            // link
+            //     .style("display", d => filteredNodeIds.includes(d.source.id) && filteredNodeIds.includes(d.target.id) ? "block" : "none");
         }
 
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
         // Event listener for search input field
         document.getElementById("searchInput").addEventListener("input", function() {
             const searchQuery = this.value.trim();
             filterNodes(searchQuery);
         });
-        
-        // Zooming behaves strangely...network shoots off the screen sometimes.
-        // Create a zoom behavior
-        // const zoom = d3.zoom()
-        //     .scaleExtent([0.3, 10]) // Set the scale extent to restrict zooming range
-        //     .extent([[0, 0], [width, height]]) // Set the extent of the zoom behavior
-        //     .on("zoom", zoomed); // Define the zoom event handler
 
-        // Apply the zoom behavior to the SVG container
-        // svg.call(zoom);
+        // Initialize autocomplete for the search input field
+        $(function() {
+            const searchTerm = getQueryParam("search"); // Get search term from URL query parameter
 
-        // Define the zoomed function to handle zoom events
-        // function zoomed(event) {
-        //     // Get the current transform
-        //     // const { transform } = event;
-        //     // Update the transform attribute of the SVG container
-        //     svg.attr("transform", event.transform);
-        //     // // Constrain panning within the bounds of the SVG canvas
-        //     // const { x, y, k } = transform;
-        //     // svg.selectAll(".nodes, .links")
-        //     //     .attr("transform", `translate(${Math.min(0, Math.max(width * (1 - k), x))},${Math.min(0, Math.max(height * (1 - k), y))}) scale(${k})`);            
-        // }
-    $(function() {
-        $("#searchInput").autocomplete({
-            source: function(request, response) {
-                // Filter nodes based on search input
-                const term = request.term.toLowerCase();
-                const filteredNodes = nodes.filter(node => node.name.toLowerCase().includes(term));
-                const nodeNames = filteredNodes.map(node => node.name);
-                response(nodeNames);
-            },
-            minLength: 1, // Minimum characters before triggering autocomplete
-            select: function(event, ui) {
-                // Handle selection of autocomplete suggestion
-                const selectedNodeName = ui.item.value;
-                // Filter nodes based on selected node name and update visualization
-                filterNodes(selectedNodeName);
-            }
-        });
-    });
+            // Initialize autocomplete
+            $("#searchInput").autocomplete({
+                source: function(request, response) {
+                    const term = request.term.toLowerCase();
+                    const filteredNodes = nodes.filter(node => node.name.toLowerCase().includes(term));
+                    const nodeNames = filteredNodes.map(node => node.name);
+                    response(nodeNames);
+                },
+                minLength: 1,
+                select: function(event, ui) {
+                    const selectedNodeName = ui.item.value;
+                    filterNodes(selectedNodeName);
+                }
+            });
 
+            // Set search input field value
+            $("#searchInput").val(searchTerm);
+
+            // Manually trigger filtering based on search query
+            filterNodes(searchTerm);
+
+            // Event listener for input event on search input field
+            $("#searchInput").on("input", function() {
+                const searchQuery = $(this).val().trim();
+                filterNodes(searchQuery);
+            });
+        });        
 
     </script>
 {% endblock %}

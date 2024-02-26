@@ -6,6 +6,8 @@
 
 <h1> {{ entity.name }} </h1>
 
+<a href="/network/?search={{ entity.name }}"><span class="fa fa-share-alt"></span> Network </a><br>
+
 {% for value in entity.values.all %}
   {% if value.field.name != "Image URL" %}
     <b>{{ value.field.name }}</b>: {{ value.value|default_if_none:"" }}
