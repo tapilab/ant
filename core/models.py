@@ -30,7 +30,7 @@ class Entity(models.Model):
 
     def get_value(self, field_name):
         vs = self.get_values(field_name)
-        if len(vs) > 0:
+        if len(vs) > 0 and vs[0] is not None:
             return vs[0]
         else:
             return ''

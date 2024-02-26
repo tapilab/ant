@@ -19,11 +19,12 @@ def create_entity_types(sheets):
     entity_types_df = get_sheet_by_name(sheets, 'Entities')
     entity_types = {}
     for i, e in entity_types_df.iterrows():
-        name = e.Type
-        e = EntityType(name=name, color=e.Color)
-        e.save()
-        entity_types[name] = e
-        print('Added Entity Type', name)
+        if not pd.isnull(e.Type):
+            name = e.Type
+            e = EntityType(name=name, color=e.Color)
+            e.save()
+            entity_types[name] = e
+            print('Added Entity Type', name)
     return entity_types
     
 def create_relationship_types(sheets, db):
@@ -67,24 +68,25 @@ def create_entities(sheets, db):
         sheet = sheets[entity_type_name]    
         entity_type = db.entity_types[entity_type_name]
         for _, row in sheet.iterrows():
-            key = None
-            values = []
-            for col, val in row.to_dict().items():
-                if (col in db.relationship_types[entity_type_name] or 
-                    re.match(r'.*\.[0-9]+$', col) or col.lower()=='name'): 
-                    continue
-                v = Value(field=db.fields[entity_type_name][col], 
-                          entity_type=entity_type,
-                          value=str(val) if not pd.isnull(val) else None)
-                v.save()
-                values.append(v)
-                if col.strip().lower() == 'key':
-                    key = str(val)
-            entity = Entity(entity_type=entity_type, key=key, name=row['Name'])
-            entity.save()
-            entity.values.set(values)
-            entity.save()
-            entities[entity_type_name][key] = entity    
+            if not pd.isnull(row.Key):
+                key = None
+                values = []
+                for col, val in row.to_dict().items():
+                    if (col in db.relationship_types[entity_type_name] or 
+                        re.match(r'.*\.[0-9]+$', col) or col.lower()=='name'): 
+                        continue
+                    v = Value(field=db.fields[entity_type_name][col], 
+                              entity_type=entity_type,
+                              value=str(val) if not pd.isnull(val) else None)
+                    v.save()
+                    values.append(v)
+                    if col.strip().lower() == 'key':
+                        key = str(val)
+                entity = Entity(entity_type=entity_type, key=key, name=row['Name'])
+                entity.save()
+                entity.values.set(values)
+                entity.save()
+                entities[entity_type_name][key] = entity    
     return entities
 
 def create_relationships(sheets, db):
@@ -92,21 +94,22 @@ def create_relationships(sheets, db):
     for entity_type_name in db.entity_types:
         sheet = sheets[entity_type_name]    
         for _, row in sheet.iterrows():
-            for col, val in row.to_dict().items():     
-                if pd.isnull(val): # nothing to add
-                    continue
-                # drop any added .1, .2 etc string added for duplicate rows
-                col = re.sub(r'\.[0-9]+$', '', col)
-                if col in db.relationship_types[entity_type_name]:
-                    relationship_type = db.relationship_types[entity_type_name][col]
-                    entity1 = db.entities[entity_type_name][row.Key]
-                    entity2_type = relationship_type.target_entity_type.name
-                    print(col, relationship_type.name, entity1.key, entity2_type, val)
-                    entity2 = db.entities[entity2_type][val]
-                    r = Relationship(relationship_type=relationship_type,
-                                     source_entity=entity1,
-                                     target_entity=entity2).save()    
-                    relationships[col] = r
+            if not pd.isnull(row.Key):
+                for col, val in row.to_dict().items():     
+                    if pd.isnull(val): # nothing to add
+                        continue
+                    # drop any added .1, .2 etc string added for duplicate rows
+                    col = re.sub(r'\.[0-9]+$', '', col)
+                    if col in db.relationship_types[entity_type_name]:
+                        relationship_type = db.relationship_types[entity_type_name][col]
+                        entity1 = db.entities[entity_type_name][row.Key]
+                        entity2_type = relationship_type.target_entity_type.name
+                        print(col, relationship_type.name, entity1.key, entity2_type, val)
+                        entity2 = db.entities[entity2_type][val]
+                        r = Relationship(relationship_type=relationship_type,
+                                         source_entity=entity1,
+                                         target_entity=entity2).save()    
+                        relationships[col] = r
     return relationships
     
 

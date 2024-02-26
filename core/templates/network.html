@@ -31,7 +31,12 @@
             top: 100px; /* Adjust the top position as needed */
             left: 50px; /* Adjust the left position as needed */
             z-index: 500; /* Ensure the search input is above other elements */
-        }        
+        }    
+        svg {
+            width: 95vw;
+            height: 90vh; /* fraction of screen */
+            background-color: whitesmoke; /* Optional: Add background color */
+        }            
     </style>
 {% endblock %}
 
@@ -39,7 +44,7 @@
     <div id="searchContainer">
         <input type="text" id="searchInput" placeholder="Search for nodes...">
     </div>
-    <svg id="network" width="800" height="600"></svg>
+    <svg id="network"></svg>
     <div id="mytooltip" class="mytooltip">
         <div id="mytooltipText"></div>
     	<img id="mytooltipImage" src="" alt="Tooltip Image" style="max-width: 100px; max-height: 100px;">
@@ -49,14 +54,17 @@
 {% block scripts %}
     <script>
         const svg = d3.select("#network"),
-            width = +svg.attr("width"),
-            height = +svg.attr("height");
-
+            width = svg.node().getBoundingClientRect().width,
+            height = svg.node().getBoundingClientRect().height;
+        console.log('w=' + width + ' h=' + height);
 		var networkData = {{ network_json|safe }};
 		const nodes = networkData.nodes;
 		const links = networkData.links;
 
-        const link = svg.append("g")
+        const network_group = svg.append("g")
+        .attr("id", "network-group");
+
+        const link = network_group.append("g")
             .attr("class", "links")
             .selectAll("line")
             .data(links)
@@ -64,7 +72,7 @@
             .attr("class", "link")
             .attr("stroke-width", 2);
 
-        const node = svg.append("g")
+        const node = network_group.append("g")
             .attr("class", "nodes")
             .selectAll("circle")
             .data(nodes)
@@ -76,12 +84,10 @@
             .on("mouseout", hideTooltip)
             .on("click", handleClick);
 
-        node.append("title")
-            .text(d => d.name);
-
         const simulation = d3.forceSimulation(nodes)
             .force("link", d3.forceLink(links).id(d => d.id).distance(100))
             .force("charge", d3.forceManyBody().strength(-100))
+            // .force("center", d3.forceCenter(svg.clientWidth / 2, svg.clientHeight / 2));
             .force("center", d3.forceCenter(width / 2, height / 2));
 
         simulation.on("tick", () => {
@@ -154,9 +160,27 @@
             event.stopPropagation();                
         }
 
+        // Create a zoom behavior
+        const zoom = d3.zoom()
+            .scaleExtent([0.2, 4]) // Limit zoom scale
+            .on("zoom", zoomed);
+
+        // Apply zoom behavior to the SVG element
+
+        // Define the zoomed function to handle zooming and panning
+        function zoomed(event) {
+            const { transform } = event;
+            // Apply the zoom transformation to the entire SVG group
+            // svg.attr("transform", transform);
+            d3.select('#network-group')
+            .attr("transform", transform)
+            // svg.attr("transform", transform)
+            // console.log(transform)
+        }
+        svg.call(zoom);
+
         // Function to filter nodes based on search query
         function filterNodes(searchQuery) {
-            console.log('filter. search='+searchQuery)
             if (searchQuery) {
                 const filteredNodes = nodes.filter(node => node.name.toLowerCase().includes(searchQuery.toLowerCase()));
                 const filteredNodeIds = filteredNodes.map(node => node.id);
