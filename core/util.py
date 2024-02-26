@@ -101,15 +101,18 @@ def create_relationships(sheets, db):
                     # drop any added .1, .2 etc string added for duplicate rows
                     col = re.sub(r'\.[0-9]+$', '', col)
                     if col in db.relationship_types[entity_type_name]:
-                        relationship_type = db.relationship_types[entity_type_name][col]
-                        entity1 = db.entities[entity_type_name][row.Key]
-                        entity2_type = relationship_type.target_entity_type.name
-                        print(col, relationship_type.name, entity1.key, entity2_type, val)
-                        entity2 = db.entities[entity2_type][val]
-                        r = Relationship(relationship_type=relationship_type,
-                                         source_entity=entity1,
-                                         target_entity=entity2).save()    
-                        relationships[col] = r
+                        try:
+                            relationship_type = db.relationship_types[entity_type_name][col]
+                            entity1 = db.entities[entity_type_name][row.Key]
+                            entity2_type = relationship_type.target_entity_type.name
+                            print(col, relationship_type.name, entity1.key, entity2_type, val)
+                            entity2 = db.entities[entity2_type][val]
+                            r = Relationship(relationship_type=relationship_type,
+                                             source_entity=entity1,
+                                             target_entity=entity2).save()    
+                            relationships[col] = r
+                        except Exception as e:
+                            return ValueError('Cannot add relationship from row %s\n%s' % (row, str(e)))
     return relationships
     
 
@@ -175,16 +178,20 @@ def import_from_google_sheet(url):
         sheets = pd.read_excel(id2export_url(url2doc_id(url)), sheet_name=None)
     except:
         return False, "Cannot find a sheet at that URL. Please navigate to the page of the Google sheet and copy the URL in your browser's address bar."
-    db = DB()
-    db.entity_types = create_entity_types(sheets)
-    db.relationship_types = create_relationship_types(sheets, db)
-    # db.relationship_types
-    db.fields = create_fields(sheets, db)
-    db.entities = create_entities(sheets, db)
-    db.relationships = create_relationships(sheets, db)
-    print('entities')
-    Network(compressed_json=gzip.compress(db2json())).save()
-    return True, "Success!"
+    
+    try:      
+        db = DB()
+        db.entity_types = create_entity_types(sheets)
+        db.relationship_types = create_relationship_types(sheets, db)
+        # db.relationship_types
+        db.fields = create_fields(sheets, db)
+        db.entities = create_entities(sheets, db)
+        db.relationships = create_relationships(sheets, db)
+        print('entities')
+        Network(compressed_json=gzip.compress(db2json())).save()
+        return True, "Success!"
+    except Exception as e:
+        return False, str(e)
 
 
 
