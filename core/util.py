@@ -112,7 +112,7 @@ def create_relationships(sheets, db):
                                              target_entity=entity2).save()    
                             relationships[col] = r
                         except Exception as e:
-                            return ValueError('Cannot add relationship from row %s\n%s' % (row, str(e)))
+                            raise ValueError('Cannot add relationship from row %s\n%s' % (row, str(e)))
     return relationships
     
 
