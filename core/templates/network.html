@@ -29,26 +29,45 @@
         #searchContainer {
             position: absolute;
             top: 100px; /* Adjust the top position as needed */
-            left: 50px; /* Adjust the left position as needed */
+            left: 30vw; /* Adjust the left position as needed */
             z-index: 500; /* Ensure the search input is above other elements */
         }    
         svg {
-            width: 95vw;
+            width: 100%; /* 90vw;*/
             height: 90vh; /* fraction of screen */
             background-color: whitesmoke; /* Optional: Add background color */
-        }            
+        }       
+        #details {
+/*            width: 90vw; /* Set the width as needed */
+/*            height: 90vh; /* Set the height as needed */
+/*            background-color: lightgray; /* Set the background color */*/
+            position: absolute;
+/*            top: 0; /* Adjust the top position as needed */*/
+/*            left: calc(100% + 1px); /* Position to the right of the svg element */*/
+        }     
     </style>
 {% endblock %}
 
 {% block content %}
-    <div id="searchContainer">
-        <input type="text" id="searchInput" placeholder="Search for nodes...">
+
+<div id="searchContainer">
+    <input type="text" id="searchInput" placeholder="Search for nodes...">
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-9">
+            <svg id="network">hello</svg>
+        </div>
+        <div class="col-md-3">
+            <div id="details"></div>
+        </div>
     </div>
-    <svg id="network"></svg>
-    <div id="mytooltip" class="mytooltip">
+</div>
+ <div id="mytooltip" class="mytooltip">
         <div id="mytooltipText"></div>
     	<img id="mytooltipImage" src="" alt="Tooltip Image" style="max-width: 100px; max-height: 100px;">
-    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -170,11 +189,40 @@
                 .duration(500) // Optional: Define the transition duration
                 .attr("transform", `translate(${translateX}, ${translateY})`);
 
+            // Update the details div.
+            node2html(clickedNode, function(htmlContent) {
+                d3.select("#details")
+                .html(htmlContent);                    
+            });
         }
         // Prevent propagation of the click event to the SVG canvas
         event.stopPropagation();                
     }
 
+    function node2html(node, callback) {
+        // Return html content for this entity.
+        fetch('/entity/?type=' + node.entity_type + '&key=' + node.key)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.text();
+          })
+          .then(html => {
+            const tempContainer = document.createElement('div');
+            d3.select(tempContainer).html(html);
+            // Select the specific <div> element you want
+            const targetDiv = tempContainer.querySelector('#entity');
+            if (targetDiv) {
+              callback(targetDiv.innerHTML);
+            } else {
+              console.error('The specified div was not found in the HTML');
+            }
+          })
+          .catch(error => {
+            console.error('There was a problem fetching the HTML:', error);
+          });
+    }
     // Create a zoom behavior
     const zoom = d3.zoom()
         .scaleExtent([0.2, 4]) // Limit zoom scale
@@ -208,7 +256,7 @@
             // Apply the translation transform to the SVG container
             d3.select('#network-group')
             .attr("transform", `translate(${translateX}, ${translateY})`);
-
+            d3.select("#"+filteredNodes.id).dispatch('click');
             // node
             //     .style("display", d => filteredNodeIds.includes(d.id) ? "block" : "none");
 
