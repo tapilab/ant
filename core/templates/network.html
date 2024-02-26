@@ -157,18 +157,22 @@
         // Function to filter nodes based on search query
         function filterNodes(searchQuery) {
             console.log('filter. search='+searchQuery)
-            const filteredNodes = nodes.filter(node => node.name.toLowerCase().includes(searchQuery.toLowerCase()));
-            const filteredNodeIds = filteredNodes.map(node => node.id);
+            if (searchQuery) {
+                const filteredNodes = nodes.filter(node => node.name.toLowerCase().includes(searchQuery.toLowerCase()));
+                const filteredNodeIds = filteredNodes.map(node => node.id);
 
-            // Update node selection to display only filtered nodes
-            // ... or just highlight them.            
-            node.classed("highlighted", d => filteredNodeIds.includes(d.id));
-            // node
-            //     .style("display", d => filteredNodeIds.includes(d.id) ? "block" : "none");
+                // Update node selection to display only filtered nodes
+                // ... or just highlight them.            
+                node.classed("highlighted", d => filteredNodeIds.includes(d.id));
+                // node
+                //     .style("display", d => filteredNodeIds.includes(d.id) ? "block" : "none");
 
-            // // Update link selection to display only links connected to filtered nodes
-            // link
-            //     .style("display", d => filteredNodeIds.includes(d.source.id) && filteredNodeIds.includes(d.target.id) ? "block" : "none");
+                // // Update link selection to display only links connected to filtered nodes
+                // link
+                //     .style("display", d => filteredNodeIds.includes(d.source.id) && filteredNodeIds.includes(d.target.id) ? "block" : "none");
+            } else {
+                node.classed("highlighted", false);
+            }
         }
 
         function getQueryParam(param) {
