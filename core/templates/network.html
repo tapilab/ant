@@ -24,7 +24,7 @@
             /* fill: yellow; /* Change the fill color to highlight */
             stroke: yellow;
             stroke-width: 4px;
-            r: 12;
+            r: 15;
         }        
         .highlighted_link {
             stroke: yellow; /* Change the color to a desired color */
@@ -110,15 +110,44 @@
 
     const simulation = d3.forceSimulation(nodes)
         .force("link", d3.forceLink(links).id(d => d.id).distance(100))
-        .force("charge", d3.forceManyBody().strength(-100)) // was -100
+        .force("charge", d3.forceManyBody().strength(-10)) // was -100
         // .force("center", d3.forceCenter(svg.clientWidth / 2, svg.clientHeight / 2));
         .force("center", d3.forceCenter(width / 2, height / 2));
+
+    // Function to zoom out and center
+    function fitScreen() {
+        var bounds = network_group.node().getBBox();
+        var centerX = bounds.x + bounds.width / 2;
+        var centerY = bounds.y + bounds.height / 2;
+        var scale = Math.min(width / bounds.width, height / bounds.height);
+        var translateX = width / 2 - centerX * scale;
+        var translateY = height / 2 - centerY * scale;
+
+        svg.transition().duration(500).call(
+            zoom.transform,
+            d3.zoomIdentity.translate(translateX, translateY).scale(scale)
+        );
+    }
+
+    function fitScreen2() {
+        const bbox = svg.node().getBBox();
+
+        // svg.call(zoom.transform, d3.zoomIdentity.scale(0.3));
+        zoomScale = Math.min(width/ bbox.width, height / bbox.height);
+        // // Calculate the center of the bounding box
+        const centerX = bbox.x + bbox.width / 2;
+        const centerY = bbox.y + bbox.height / 2;
+
+        const newTransform = d3.zoomIdentity.translate(width / 2 - centerX * .3, height / 2 - centerY * .4).scale(0.4);
+        svg.transition().duration(500).call(zoom.transform, newTransform);
+    };
 
     let tickCount = 0;
     simulation.on("tick", () => {
         tickCount++;
-        if (tickCount % 30 == 0) {
-            svg.call(zoom.transform, d3.zoomIdentity.scale(0.7));
+        if (tickCount % 3 == 0) {
+            fitScreen();
+            // svg.call(zoom.transform, d3.zoomIdentity.scale(0.7));
         }
         link
             .attr("x1", d => d.source.x)
@@ -132,7 +161,8 @@
     })
     .on('end', function() {
         console.log('simulation end!!');
-        svg.call(zoom.transform, d3.zoomIdentity.scale(0.7));
+        fitScreen();
+        // svg.call(zoom.transform, d3.zoomIdentity.scale(0.7));
         // d3.select('#network-group').call(zoom);
         // Calculate the bounding box of the network
         // const bbox = network_group.node().getBBox();
@@ -268,7 +298,7 @@
     }
     // Create a zoom behavior
     const zoom = d3.zoom()
-        .scaleExtent([0.01, 4]) // Limit zoom scale
+        .scaleExtent([0.08, 4]) // Limit zoom scale
         .on("zoom", zoomed);
 
     // Apply zoom behavior to the SVG element
