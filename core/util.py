@@ -146,12 +146,14 @@ def get_sheet_by_name(sheets, name):
             return sheet
     return None
 
+def node2jsonid(n):
+    return n.entity_type.name + '__' + n.key
 
 def db2json():
     nodes = []
     for e in Entity.objects.all():
         nodes.append({
-            'id': e.pk,
+            'id': node2jsonid(e),#e.entity_type.name + '__' + e.key,#e.pk,
             'key': e.key,
             'name': e.name,
             'entity_type': e.entity_type.name,
@@ -161,8 +163,8 @@ def db2json():
     links = []
     for r in Relationship.objects.all():
         links.append({
-            'source': r.source_entity.pk,
-            'target': r.target_entity.pk,
+            'source': node2jsonid(r.source_entity),
+            'target': node2jsonid(r.target_entity),#r.target_entity.pk,
             'relationship_type': r.relationship_type.name,
             'value': 1
         })
