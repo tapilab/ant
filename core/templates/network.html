@@ -30,26 +30,30 @@
             stroke: yellow; /* Change the color to a desired color */
             stroke-width: 10px; /* Increase the width to a desired value */
         }
+        .mycontainer {
+            left: 5vw;
+        }
+
         #searchContainer {
-            position: absolute;
+/*            position: absolute;
             top: 100px; /* Adjust the top position as needed */
             left: 5vw; /* Adjust the left position as needed */
             z-index: 500; /* Ensure the search input is above other elements */
-        }    
+*/        }    
         svg {
             width: 100%; /* 90vw;*/
             height: 90vh; /* fraction of screen */
             background-color: whitesmoke; /* Optional: Add background color */
         }       
         #details {
-/*            width: 90vw; /* Set the width as needed */
+/*            width: 10vw; /* Set the width as needed */
 /*            height: 90vh; /* Set the height as needed */
 /*            background-color: lightgray; /* Set the background color */*/
-            position: absolute;
+/*            position: absolute;*/
 /*            top: 0; /* Adjust the top position as needed */*/
-/*            left: calc(100% + 1px); /* Position to the right of the svg element */*/
-        }     
-        .button-container {
+/*            left: calc(100% + 1px); /* Position to the right of the svg element */*/*/
+*/        }     
+        #button-container {
             margin-bottom: 10px;
         }
         .button {
@@ -64,23 +68,28 @@
 
 {% block content %}
 
-<div id="searchContainer">
-    <input type="text" id="searchInput" placeholder="Search for nodes...">
-</div>
-<div class="button-container">
-        <!-- Toggle buttons will be dynamically added here -->
-</div>
-<div class="container">
+<div class="mycontainer">
     <div class="row">
+        <!-- Toggle buttons -->
+        <div id="button-container" class="col-md-4"></div>
+        <!-- Search bar -->
+        <div id="searchContainer" class="col-md-4">
+            search: <input type="text" id="searchInput" placeholder="Search for nodes...">
+        </div>
+    </div>
+    <div class="row">
+        <!-- Network -->
         <div class="col-md-9">
             <svg id="network">hello</svg>
         </div>
+        <!-- Entity details -->
         <div class="col-md-3">
             <div id="details"></div>
         </div>
     </div>
 </div>
- <div id="mytooltip" class="mytooltip">
+<!-- Tooltip -->
+<div id="mytooltip" class="mytooltip">
         <div id="mytooltipText"></div>
     	<img id="mytooltipImage" src="" alt="Tooltip Image" style="max-width: 100px; max-height: 100px;">
 </div>
@@ -88,14 +97,11 @@
 
 {% block scripts %}
 <script>
-    const svg = d3.select("#network"),
-        width = svg.node().getBoundingClientRect().width,
-        height = svg.node().getBoundingClientRect().height;
+    // Create network.
+    const svg = d3.select("#network");
 	var networkData = {{ network_json|safe }};
 	const nodes = networkData.nodes;
 	const links = networkData.links;
-    // let zoomScale = .1;
-    // let currentZoomState = d3.zoomIdentity;
 
     const network_group = svg.append("g")
     .attr("id", "network-group");
@@ -108,7 +114,7 @@
         .attr("class", "link")
         .attr("stroke-width", 2)
         .style("visibility", "visible"); // Ensure links are visible
-;
+
 
     const node = network_group.append("g")
         .attr("class", "nodes")
@@ -122,12 +128,12 @@
         .on("mouseout", hideTooltip)
         .on("click", handleClick)
         .style("visibility", "visible"); // Ensure links are visible
-;
 
-
+    const width = svg.node().getBoundingClientRect().width;
+    const height = svg.node().getBoundingClientRect().height;
 
     // Add toggle buttons
-    const buttonContainer = d3.select(".button-container");
+    const buttonContainer = d3.select("#button-container");
     const entityTypes = Array.from(new Set(nodes.map(node => node.entity_type)));
     entityTypes.forEach(entityType => {
         buttonContainer.append("button")
@@ -160,15 +166,38 @@
             return sourceVisibility && targetVisibility ? "visible" : "hidden";
         });
 
-    }    
+    };    
 
+    // Layout network.
     const simulation = d3.forceSimulation(nodes)
         .force("link", d3.forceLink(links).id(d => d.id).distance(100))
         .force("charge", d3.forceManyBody().strength(-50)) // was -100
         // .force("center", d3.forceCenter(svg.clientWidth / 2, svg.clientHeight / 2));
         .force("center", d3.forceCenter(width / 2, height / 2));
 
-    // Function to zoom out and center
+    let tickCount = 0;
+    simulation.on("tick", () => {
+        tickCount++;
+        // Zoom out and refit every three iterations.
+        if (tickCount % 3 == 0) {
+            fitScreen();
+        }
+        link
+            .attr("x1", d => d.source.x)
+            .attr("y1", d => d.source.y)
+            .attr("x2", d => d.target.x)
+            .attr("y2", d => d.target.y);
+
+        node
+            .attr("cx", d => d.x)
+            .attr("cy", d => d.y);
+    })
+    .on('end', function() {
+        console.log('simulation end!!');
+        fitScreen();
+    });
+
+    // Zoom out and center.
     function fitScreen() {
         const searchTerm = getQueryParam("search");
         if (searchTerm != null) {
@@ -188,27 +217,7 @@
         }
     }
 
-    let tickCount = 0;
-    simulation.on("tick", () => {
-        tickCount++;
-        if (tickCount % 3 == 0) {
-            fitScreen();
-        }
-        link
-            .attr("x1", d => d.source.x)
-            .attr("y1", d => d.source.y)
-            .attr("x2", d => d.target.x)
-            .attr("y2", d => d.target.y);
-
-        node
-            .attr("cx", d => d.x)
-            .attr("cy", d => d.y);
-    })
-    .on('end', function() {
-        console.log('simulation end!!');
-        fitScreen();
-    });
-
+    // Tooltip
     function showTooltip(event, d) {
         const tooltip = d3.select("#mytooltip");
         const tooltipImage = d3.select("#mytooltipImage");
@@ -242,18 +251,11 @@
 
     // Define the handleClick function
     function handleClick(event, clickedNode) {
-        // Check if the clicked node is already highlighted
-        // const isHighlighted = d3.select(this).classed("highlighted");
         // Get the IDs of connected nodes
         const connectedNodeIds = links
             .filter(link => link.source === clickedNode || link.target === clickedNode)
             .map(link => link.source === clickedNode ? link.target.id : link.source.id);
-        // if (isHighlighted) {
-        //     // Remove highlighting from this node and connected
-        //     d3.select(this).classed("highlighted", false);
-        //     node.filter(d => connectedNodeIds.includes(d.id))
-        //         .classed("highlighted", false);
-        // } else {
+
         // Remove highlighting from previously clicked nodes (if any)
         d3.selectAll(".highlighted").classed("highlighted", false);
 
@@ -263,12 +265,13 @@
         // Highlight the connected nodes
         node.filter(d => connectedNodeIds.includes(d.id))
             .classed("highlighted", true);
+
         // Highlight links
         connectedNodeIds.push(clickedNode);        
         link.classed("highlighted_link", d=> (connectedNodeIds.includes(d.source.id) && d.target.id==clickedNode.id) || 
                                              (d.source.id==clickedNode.id && connectedNodeIds.includes(d.target.id)));   
 
-        // recenter plot
+        // recenter plot on clicked node
         const translateX = width / 2 - clickedNode.x; // Adjust to center horizontally
         const translateY = height / 2 - clickedNode.y; // Adjust to center vertically
         svg.transition().duration(500).call(
@@ -286,6 +289,7 @@
         event.stopPropagation();                
     }
 
+    // Fetch html of entity details.
     function node2html(node, callback) {
         // Return html content for this entity.
         fetch('/entity/?type=' + node.entity_type + '&key=' + node.key)
@@ -319,7 +323,6 @@
     // Apply zoom behavior to the SVG element
     svg.call(zoom).on("zoom", zoomed);
 
-
     // Define the zoomed function to handle zooming and panning
     function zoomed(event) {
         network_group.attr("transform", event.transform);
@@ -327,7 +330,7 @@
         // zoomScale = transform.k;
     }
 
-    // Function to filter nodes based on search query
+    // Filter nodes based on search query
     function filterNodes(searchQuery) {
         if (searchQuery) {
             const filteredNodes = nodes.filter(node => node.name.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -369,11 +372,13 @@
         }
     }
 
+    // Get what is typed into search bar.
     function getQueryParam(param) {
         const urlParams = new URLSearchParams(window.location.search);
         return urlParams.get(param);
     }
-    // Event listener for search input field
+
+    // Listen for search input field.
     document.getElementById("searchInput").addEventListener("input", function() {
         const searchQuery = this.value.trim();
         filterNodes(searchQuery);
@@ -410,8 +415,6 @@
             filterNodes(searchQuery);
         });
     });        
-    
-
 
 </script>
 {% endblock %}
