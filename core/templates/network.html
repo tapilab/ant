@@ -82,7 +82,8 @@
 	var networkData = {{ network_json|safe }};
 	const nodes = networkData.nodes;
 	const links = networkData.links;
-    let zoomScale = 1;
+    // let zoomScale = .1;
+    // let currentZoomState = d3.zoomIdentity;
 
     const network_group = svg.append("g")
     .attr("id", "network-group");
@@ -109,11 +110,16 @@
 
     const simulation = d3.forceSimulation(nodes)
         .force("link", d3.forceLink(links).id(d => d.id).distance(100))
-        .force("charge", d3.forceManyBody().strength(-100))
+        .force("charge", d3.forceManyBody().strength(-100)) // was -100
         // .force("center", d3.forceCenter(svg.clientWidth / 2, svg.clientHeight / 2));
         .force("center", d3.forceCenter(width / 2, height / 2));
 
+    let tickCount = 0;
     simulation.on("tick", () => {
+        tickCount++;
+        if (tickCount % 30 == 0) {
+            svg.call(zoom.transform, d3.zoomIdentity.scale(0.7));
+        }
         link
             .attr("x1", d => d.source.x)
             .attr("y1", d => d.source.y)
@@ -123,6 +129,26 @@
         node
             .attr("cx", d => d.x)
             .attr("cy", d => d.y);
+    })
+    .on('end', function() {
+        console.log('simulation end!!');
+        svg.call(zoom.transform, d3.zoomIdentity.scale(0.7));
+        // d3.select('#network-group').call(zoom);
+        // Calculate the bounding box of the network
+        // const bbox = network_group.node().getBBox();
+        // console.log('bbox ' + bbox.width + ' ' + bbox.height);
+        // // Calculate the scale needed to fit the entire network within the SVG container
+        // zoomScale = Math.min(width/ bbox.width, height / bbox.height);
+        //    console.log('scale ' + zoomScale);
+        // // Calculate the center of the bounding box
+        // const centerX = bbox.x + bbox.width / 2;
+        // const centerY = bbox.y + bbox.height / 2;
+
+        // const newTransform = d3.zoomIdentity.translate(width / 2 - centerX * zoomScale, height / 2 - centerY * zoomScale).scale(zoomScale);
+        // currentZoomState = newTransform;
+
+        // // Apply the zoom transformation to center the network and scale it appropriately
+        // network_group.transition().duration(500).call(zoom.transform, newTransform);
     });
 
     function showTooltip(event, d) {
@@ -154,6 +180,9 @@
         // Remove the highlighted class from all nodes
         node.classed("highlighted", false);
         link.classed("highlighted_link", false);
+        // network_group.transition().duration(500).attr("transform", currentZoomState);
+        // Prevent default behavior and bubbling if necessary
+        // d3.event.preventDefault();
     });
 
     // Define the handleClick function
@@ -187,24 +216,29 @@
 
         // Recenter on clicked node
         // Obtain the position of the clicked node
-        const centerX = clickedNode.x; // X-coordinate of the clicked node
-        const centerY = clickedNode.y; // Y-coordinate of the clicked node
+        // const centerX = clickedNode.x; // X-coordinate of the clicked node
+        // const centerY = clickedNode.y; // Y-coordinate of the clicked node
 
-        // Calculate the translation values to center the clicked node
-        const translateX = (width / 2 - centerX);// * zoomScale; // Adjust to center horizontally
-        const translateY = (height / 2 - centerY);// * zoomScale; // Adjust to center vertically
+        // // Calculate the translation values to center the clicked node
+        // const translateX = (width / 2 - centerX);// * zoomScale; // Adjust to center horizontally
+        // const translateY = (height / 2 - centerY);// * zoomScale; // Adjust to center vertically
 
-        // Apply the translation transform to the SVG container
-        d3.select('#network-group').transition()
-            .duration(500) // Optional: Define the transition duration
-            .attr("transform", `translate(${translateX}, ${translateY})`);
 
         // Update the details div.
         node2html(clickedNode, function(htmlContent) {
             d3.select("#details")
             .html(htmlContent);                    
         });
-        // Prevent propagation of the click event to the SVG canvas
+
+        // Calculate new translation and scale if needed
+        // Here, just translating without scaling:
+        // const newTransform = d3.zoomIdentity.translate(translateX, translateY); // No scale change here
+        // currentZoomState = newTransform;
+
+        // // Apply the transformation
+        // network_group.transition().duration(500).attr("transform", newTransform);
+
+        // // Prevent propagation of the click event to the SVG canvas
         event.stopPropagation();                
     }
 
@@ -234,20 +268,30 @@
     }
     // Create a zoom behavior
     const zoom = d3.zoom()
-        .scaleExtent([0.1, 4]) // Limit zoom scale
+        .scaleExtent([0.01, 4]) // Limit zoom scale
         .on("zoom", zoomed);
 
     // Apply zoom behavior to the SVG element
+    // svg.call(zoom.transform, currentZoomState); // Initialize the zoom with currentZoomState
+    // d3.select('#network-group').call(zoom);
+    svg.call(zoom).on("zoom", zoomed);
+
 
     // Define the zoomed function to handle zooming and panning
     function zoomed(event) {
-        const { transform } = event;
-        // Apply the zoom transformation to the network-group
-        // Access the zoom scale (k)
-        zoomScale = transform.k;
-        // console.log('zs=' + zoomScale);
-        d3.select('#network-group')
-        .attr("transform", transform)
+        network_group.attr("transform", event.transform);
+        // const { transform } = event;
+        // // Apply the zoom transformation to the network-group
+        // // Access the zoom scale (k)
+        // zoomScale = transform.k;
+        // // console.log('zs=' + zoomScale);
+        // // console.log('zoom identity ' + d3.zoomIdentity);
+        // currentZoomState = event.transform;
+        
+        // // zoomScale = event.transform;
+        // d3.select('#network-group')
+        // .attr("transform", currentZoomState);
+        // .attr("transform", zoomScale);
     }
 
     // Function to filter nodes based on search query
@@ -257,16 +301,18 @@
             const filteredNodeIds = filteredNodes.map(node => node.id);
 
             // Update node selection to display only filtered nodes
-            // ... or just highlight them.            
-            node.classed("highlighted", d => filteredNodeIds.includes(d.id));
-            // link.classed("highlighted_link", d=> filteredNodeIds.includes(d.source.id) && filteredNodeIds.includes(d.target.id))   
-            // Recenter plot
-            const translateX = width / 2 - filteredNodes[0].x; // Adjust to center horizontally
-            const translateY = height / 2 - filteredNodes[0].y; // Adjust to center vertically
-            // Apply the translation transform to the SVG container
-            d3.select('#network-group')
-            .attr("transform", `translate(${translateX}, ${translateY})`);
-            d3.select("#"+filteredNodes.id).dispatch('click');
+            // ... or just highlight them.       
+            if (filteredNodes.length != 0) {
+                node.classed("highlighted", d => filteredNodeIds.includes(d.id));
+                // link.classed("highlighted_link", d=> filteredNodeIds.includes(d.source.id) && filteredNodeIds.includes(d.target.id))   
+                // Recenter plot
+                const translateX = width / 2 - filteredNodes[0].x; // Adjust to center horizontally
+                const translateY = height / 2 - filteredNodes[0].y; // Adjust to center vertically
+                // Apply the translation transform to the SVG container
+                // network_group
+                // .attr("transform", `translate(${translateX}, ${translateY})`);
+                // d3.select("#"+filteredNodes.id).dispatch('click');
+            }
             // node
             //     .style("display", d => filteredNodeIds.includes(d.id) ? "block" : "none");
 
@@ -319,7 +365,7 @@
             filterNodes(searchQuery);
         });
     });        
-    svg.call(zoom);
+    
 
 
 </script>
