@@ -33,7 +33,7 @@
         #searchContainer {
             position: absolute;
             top: 100px; /* Adjust the top position as needed */
-            left: 10vw; /* Adjust the left position as needed */
+            left: 5vw; /* Adjust the left position as needed */
             z-index: 500; /* Ensure the search input is above other elements */
         }    
         svg {
@@ -49,6 +49,16 @@
 /*            top: 0; /* Adjust the top position as needed */*/
 /*            left: calc(100% + 1px); /* Position to the right of the svg element */*/
         }     
+        .button-container {
+            margin-bottom: 10px;
+        }
+        .button {
+            margin-right: 5px;
+        }
+        .active {
+            background-color: green; /* Change the background color for active buttons */
+        }
+
     </style>
 {% endblock %}
 
@@ -57,7 +67,9 @@
 <div id="searchContainer">
     <input type="text" id="searchInput" placeholder="Search for nodes...">
 </div>
-
+<div class="button-container">
+        <!-- Toggle buttons will be dynamically added here -->
+</div>
 <div class="container">
     <div class="row">
         <div class="col-md-9">
@@ -94,7 +106,9 @@
         .data(links)
         .enter().append("line")
         .attr("class", "link")
-        .attr("stroke-width", 2);
+        .attr("stroke-width", 2)
+        .style("visibility", "visible"); // Ensure links are visible
+;
 
     const node = network_group.append("g")
         .attr("class", "nodes")
@@ -106,24 +120,64 @@
         .attr("fill", d => d.color)
         .on("mouseover", showTooltip)
         .on("mouseout", hideTooltip)
-        .on("click", handleClick);
+        .on("click", handleClick)
+        .style("visibility", "visible"); // Ensure links are visible
+;
+
+
+
+    // Add toggle buttons
+    const buttonContainer = d3.select(".button-container");
+    const entityTypes = Array.from(new Set(nodes.map(node => node.entity_type)));
+    entityTypes.forEach(entityType => {
+        buttonContainer.append("button")
+            .attr("class", "button active")
+            .text(entityType)
+            .on("click", function() {
+                const isVisible = d3.select(this).classed("active");
+                d3.select(this).classed("active", !isVisible);
+                toggleNodes(entityType, !isVisible);
+            });
+        // Show nodes for the initial 'active' buttons
+        toggleNodes(entityType, true);            
+    });
+
+    // Function to toggle nodes visibility based on entity type
+    function toggleNodes(entityType, isVisible) {
+        // First, toggle the visibility of the nodes of the specified type.
+        const nodesToToggle = node.filter(d => d.entity_type === entityType);
+        nodesToToggle.each(function(d) {
+            d.isVisible = !d.isVisible; // Add an 'isVisible' property to toggle and track visibility state
+        }).style("visibility", function(d) {
+            return d.isVisible ? "visible" : "hidden";
+        });
+
+        // Then, for each link, determine its visibility based on the visibility of its source and target nodes.
+        link.style("visibility", function(d) {
+            // A link is visible only if both source and target nodes are visible.
+            const sourceVisibility = d.source.isVisible !== false; // Treat undefined as true for initial state
+            const targetVisibility = d.target.isVisible !== false;
+            return sourceVisibility && targetVisibility ? "visible" : "hidden";
+        });
+
+    }    
 
     const simulation = d3.forceSimulation(nodes)
         .force("link", d3.forceLink(links).id(d => d.id).distance(100))
-        .force("charge", d3.forceManyBody().strength(-100)) // was -100
+        .force("charge", d3.forceManyBody().strength(-50)) // was -100
         // .force("center", d3.forceCenter(svg.clientWidth / 2, svg.clientHeight / 2));
         .force("center", d3.forceCenter(width / 2, height / 2));
 
     // Function to zoom out and center
     function fitScreen() {
-        const searchTerm = getQueryParam("search").trim();
-        if (searchTerm.length != 0) {
-            filterNodes(searchTerm);
+        const searchTerm = getQueryParam("search");
+        if (searchTerm != null) {
+            filterNodes(searchTerm.trim());
         } else {
             var bounds = network_group.node().getBBox();
             var centerX = bounds.x + bounds.width / 2;
             var centerY = bounds.y + bounds.height / 2;
-            var scale = Math.min(width / bounds.width, height / bounds.height);
+            var scale = Math.min(width / bounds.width, height / bounds.height) * 1.05;
             var translateX = width / 2 - centerX * scale;
             var translateY = height / 2 - centerY * scale;
 
