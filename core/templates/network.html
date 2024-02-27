@@ -71,15 +71,18 @@
 <div class="mycontainer">
     <div class="row">
         <!-- Toggle buttons -->
-        <div id="button-container" class="col-md-4"></div>
+        <div id="searchContainer" class="col-md-1"></div>
+        <div id="button-container" class="col-md-3"></div>
+        <div id="button-container" class="col-md-2">pinch to zoom &nbsp;&nbsp;&nbsp;&nbsp; click and drag to pan</div>
         <!-- Search bar -->
-        <div id="searchContainer" class="col-md-4">
+        <div id="searchContainer" class="col-md-2">
             search: <input type="text" id="searchInput" placeholder="Search for nodes...">
         </div>
     </div>
     <div class="row">
         <!-- Network -->
-        <div class="col-md-9">
+        <div id="searchContainer" class="col-md-1"></div>
+        <div class="col-md-8">
             <svg id="network">hello</svg>
         </div>
         <!-- Entity details -->
@@ -206,7 +209,7 @@
             var bounds = network_group.node().getBBox();
             var centerX = bounds.x + bounds.width / 2;
             var centerY = bounds.y + bounds.height / 2;
-            var scale = Math.min(width / bounds.width, height / bounds.height) * 1.05;
+            var scale = Math.min(width / bounds.width, height / bounds.height) * 1.10;
             var translateX = width / 2 - centerX * scale;
             var translateY = height / 2 - centerY * scale;
 

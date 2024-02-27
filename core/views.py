@@ -63,18 +63,28 @@ def entity(request):
 
     # get all related entities.
     relationships = []
-    rel_types = RelationshipType.objects.filter(source_entity_type__name=entity_type).values_list('name', flat=True)
+    rel_types = RelationshipType.objects.filter(source_entity_type__name=entity_type)#.values_list('name', flat=True)
     for rel_type in rel_types:
-        relationships.append((rel_type, 
+        relationships.append((rel_type.name + " " + rel_type.target_entity_type.name, 
             [{'name': r.target_entity.name,
               'key': r.target_entity.key,
               'entity_type': r.target_entity.entity_type}
               for r in 
-                    Relationship.objects.filter(source_entity=entity, relationship_type__name=rel_type)]))
+                    Relationship.objects.filter(source_entity=entity, relationship_type=rel_type)]))
+    # get reverse relationships
+    rel_types = RelationshipType.objects.filter(target_entity_type__name=entity_type)#.values_list('name', flat=True)
+    for rel_type in rel_types:    
+        relationships.append((rel_type.source_entity_type.name + " " + rel_type.name + " " + entity.name,
+            [{'name': r.source_entity.name,
+              'key': r.source_entity.key,
+              'entity_type': r.source_entity.entity_type}
+              for r in 
+                    Relationship.objects.filter(target_entity=entity, relationship_type=rel_type)]))
 
-    return render(request, 'entity.html', {'entity_type': entity_type,
-                  'entity': entity,
-                  'relationships': relationships}) 
+    return render(request, 'entity.html',
+                    {'entity_type': entity_type,
+                     'entity': entity,
+                     'relationships': relationships}) 
 
 def network(request):
     return render(request, 'network.html',

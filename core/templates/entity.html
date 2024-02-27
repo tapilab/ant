@@ -22,11 +22,13 @@
 {% endif %}
 
 {% for relationship_type, related_entity in relationships %}
-  <h3>{{ relationship_type }}</h3>
-  {% for r in related_entity %}
-    <a href="/entity?type={{ r.entity_type.name }}&key={{ r.key }}">{{ r.name }}</a>
-    {% if not forloop.last %} | {% endif %}
-  {% endfor %}
+  {% if related_entity %}
+    <h4>{{ relationship_type }}</h4>
+    {% for r in related_entity %}
+      <a href="/entity?type={{ r.entity_type.name }}&key={{ r.key }}">{{ r.name }}</a>
+      {% if not forloop.last %} | {% endif %}
+    {% endfor %}
+  {% endif %}
 {% endfor %}
 
 </div>
