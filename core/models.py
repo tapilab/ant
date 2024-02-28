@@ -4,10 +4,12 @@ import json
 
 
 class EntityType(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, null=False)
+    title_field_name = models.CharField(max_length=255, null=False)
     image_field_name = models.CharField(max_length=255, null=True)
-    title_field_name = models.CharField(max_length=255, null=True)
-    color = models.CharField(max_length=255)
+    color = models.CharField(max_length=255, null=True)
+    start_date_field_name = models.CharField(max_length=255, null=True)
+    end_date_field_name = models.CharField(max_length=255, null=True)
 
 
 class Field(models.Model):
@@ -24,8 +26,11 @@ class Value(models.Model):
 
 class Entity(models.Model):
     entity_type = models.ForeignKey(EntityType, on_delete=models.CASCADE, blank=False, null=False)
-    name = models.CharField(max_length=255)    
     key = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)    
+    image_url = models.CharField(max_length=255, null=True)
+    start_date = models.CharField(max_length=255, null=True)
+    end_date = models.CharField(max_length=255, null=True)
     values = models.ManyToManyField(Value)
 
     def get_value(self, field_name):

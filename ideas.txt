@@ -15,6 +15,7 @@ Value:
   - Field
   - EntityType
   - value : str
+  (duplicate entitytype and field_name here for quicker search?)
 
 RelationType
   - EntityType left

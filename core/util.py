@@ -1,9 +1,12 @@
 from collections import defaultdict
+from datetime import datetime
+from dateutil import parser
 from django.apps import apps
 from .models import *
 import json
 import pandas as pd
 import re
+import traceback
 
 def clear_db():
     # clear all tables in the database.
@@ -15,13 +18,36 @@ class DB:
     def __init__(self):
         pass
 
+def validate_entity_type_columns(df):
+    cols = [c.lower() for c in df.columns]
+    required = ['Type', 'Title Field', 'Image Field', 'Color', 'Start Date Field', 'End Date Field']
+    for r in required:
+        if r.lower() not in cols:
+            raise ValueError('missing %s column in Entity sheet' % r)
+
+def get_ignore_case(row, field):
+    if pd.isnull(field) or field.strip()=='':
+        return None
+    c = [i for i in row.index if i.lower()==field.lower()]
+    if len(c) == 0 or c[0] not in row.index or pd.isnull(row[c[0]]):
+        return None
+    else:
+        return str(row[c[0]])
+
 def create_entity_types(sheets):
     entity_types_df = get_sheet_by_name(sheets, 'Entities')
+    validate_entity_type_columns(entity_types_df)
     entity_types = {}
     for i, e in entity_types_df.iterrows():
         if not pd.isnull(e.Type):
             name = e.Type
-            e = EntityType(name=name, color=e.Color)
+            e = EntityType(name=name,
+                           color=e.Color,
+                           title_field_name=get_ignore_case(e, 'Title Field'),
+                           image_field_name=get_ignore_case(e, 'Image Field'),
+                           start_date_field_name=get_ignore_case(e, 'Start Date Field'),
+                           end_date_field_name=get_ignore_case(e, 'End Date Field')
+                           )
             e.save()
             entity_types[name] = e
             print('Added Entity Type', name)
@@ -62,31 +88,68 @@ def create_fields(sheets, db):
             fields[entity_type_name][c] = field
     return fields
 
+
+
+
+def iter_regular_fields(row, entity_type, db):
+    # Iterate over fields that are not special (e.g., key, image_field, etc.)
+    for col, val in row.to_dict().items():
+        print('col=', col, '...', 'sdfn=', entity_type.start_date_field_name)
+        if not (col in db.relationship_types[entity_type.name] or 
+                re.match(r'.*\.[0-9]+$', col) or
+                col.lower() == 'key' or
+                (not pd.isnull(entity_type.image_field_name) and col.lower() == entity_type.image_field_name.lower()) or
+                (not pd.isnull(entity_type.title_field_name) and col.lower() == entity_type.title_field_name.lower()) or
+                (not pd.isnull(entity_type.start_date_field_name) and col.lower() == entity_type.start_date_field_name.lower()) or
+                (not pd.isnull(entity_type.end_date_field_name) and col.lower() == entity_type.end_date_field_name.lower())
+                ): 
+            yield (col, val)
+
+def parse_datetime(value):
+    print(type(value), '-', value, '-')
+    if value is None or pd.isnull(value):
+        return None
+    # if looks like a year
+    if len(value)==4:
+        # pd.to_datetime(value, format='%Y') # pandas doesn't recognize years prior to 1677?!?!
+        return datetime.strptime(value, "%Y")
+    # otherwise, guess
+    else:
+        return parser.parse(value)
+
+
 def create_entities(sheets, db):
     entities = defaultdict(lambda: {})
     for entity_type_name in db.entity_types:
         sheet = sheets[entity_type_name]    
         entity_type = db.entity_types[entity_type_name]
         for _, row in sheet.iterrows():
-            if not pd.isnull(row.Key):
-                key = None
-                values = []
-                for col, val in row.to_dict().items():
-                    if (col in db.relationship_types[entity_type_name] or 
-                        re.match(r'.*\.[0-9]+$', col) or col.lower()=='name'): 
-                        continue
-                    v = Value(field=db.fields[entity_type_name][col], 
-                              entity_type=entity_type,
-                              value=str(val) if not pd.isnull(val) else None)
-                    v.save()
-                    values.append(v)
-                    if col.strip().lower() == 'key':
-                        key = str(val)
-                entity = Entity(entity_type=entity_type, key=key, name=row['Name'])
-                entity.save()
-                entity.values.set(values)
-                entity.save()
-                entities[entity_type_name][key.lower()] = entity    
+            print(row)
+            key = get_ignore_case(row, 'key')
+            if pd.isnull(key):
+                raise ValueError('In sheet %s, cannot find Key field for row %s' % (entity_type_name, str(row)))
+            name = get_ignore_case(row, entity_type.title_field_name)
+            if pd.isnull(name):
+                name = key # default to key for name
+                # raise ValueError('In sheet %s, cannot find Title Field %s for row %s' % (entity_type_name, entity_type.title_field_name, str(row)))
+            values = []
+            for col, val in iter_regular_fields(row, entity_type, db):
+                v = Value(field=db.fields[entity_type_name][col], 
+                          entity_type=entity_type,
+                          value=str(val) if not pd.isnull(val) else None)
+                v.save()
+                values.append(v)
+            entity = Entity(entity_type=entity_type, 
+                            key=key,
+                            name=name,
+                            image_url=get_ignore_case(row, entity_type.image_field_name),
+                            start_date=get_ignore_case(row, entity_type.start_date_field_name),
+                            end_date=get_ignore_case(row, entity_type.end_date_field_name)
+                            )
+            entity.save()
+            entity.values.set(values)
+            entity.save()
+            entities[entity_type_name][key.lower()] = entity    
     return entities
 
 def create_relationships(sheets, db):
@@ -177,7 +240,7 @@ def import_from_google_sheet(url):
     """
     clear_db()
     try:
-        sheets = pd.read_excel(id2export_url(url2doc_id(url)), sheet_name=None)
+        sheets = pd.read_excel(id2export_url(url2doc_id(url)), sheet_name=None, dtype=str)
         # remove all leading/trailing spaces everywhere.
         for s, df in sheets.items():
             sheets[s] = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
@@ -196,7 +259,7 @@ def import_from_google_sheet(url):
         Network(compressed_json=gzip.compress(db2json())).save()
         return True, "Success!"
     except Exception as e:
-        return False, str(e)
+        return False, str(e) + '\n' + str(traceback.format_exc())
 
 
 
