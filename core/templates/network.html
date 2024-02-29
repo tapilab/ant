@@ -135,6 +135,20 @@
     const width = svg.node().getBoundingClientRect().width;
     const height = svg.node().getBoundingClientRect().height;
 
+    // Keep track of all filtering states.
+    const filterState = {
+        entityTypes: {},
+        yearRange: {
+            start: Math.min(...nodes.filter(node => node.start_date !== "").map(node => node.start_date)),
+            end: Math.max(...nodes.filter(node => node.end_date !== "").map(node => node.end_date))
+        }
+    };
+    nodes.forEach(node => {
+        if (!filterState.entityTypes.hasOwnProperty(node.entity_type)) {
+            filterState.entityTypes[node.entity_type] = true; // Initialize as visible
+        }
+    });
+
     // Add toggle buttons
     const buttonContainer = d3.select("#button-container");
     const entityTypes = Array.from(new Set(nodes.map(node => node.entity_type)));
@@ -143,31 +157,58 @@
             .attr("class", "button active")
             .text(entityType)
             .on("click", function() {
+                toggleNodes(entityType)
                 const isVisible = d3.select(this).classed("active");
                 d3.select(this).classed("active", !isVisible);
-                toggleNodes(entityType, !isVisible);
+                // toggleNodes(entityType, !isVisible);
             });
         // Show nodes for the initial 'active' buttons
-        toggleNodes(entityType, true);            
+        // toggleNodes(entityType, true);            
     });
 
-    // Function to toggle nodes visibility based on entity type
-    function toggleNodes(entityType, isVisible) {
-        // First, toggle the visibility of the nodes of the specified type.
-        const nodesToToggle = node.filter(d => d.entity_type === entityType);
-        nodesToToggle.each(function(d) {
-            d.isVisible = !d.isVisible; // Add an 'isVisible' property to toggle and track visibility state
-        }).style("visibility", function(d) {
-            return d.isVisible ? "visible" : "hidden";
+
+    function updateFilters() {
+        // Update node visibility based on type and year range
+        node.style("visibility", function(d) {
+            const typeVisible = filterState.entityTypes[d.entity_type];
+            // const yearVisible = d.year >= filterState.yearRange.start && d.year <= filterState.yearRange.end;
+            // return typeVisible && yearVisible ? "visible" : "hidden";
+            return typeVisible ? "visible" : "hidden";
         });
 
-        // Then, for each link, determine its visibility based on the visibility of its source and target nodes.
+        // Update link visibility based on the visibility of its source and target nodes
         link.style("visibility", function(d) {
-            // A link is visible only if both source and target nodes are visible.
-            const sourceVisibility = d.source.isVisible !== false; // Treat undefined as true for initial state
-            const targetVisibility = d.target.isVisible !== false;
-            return sourceVisibility && targetVisibility ? "visible" : "hidden";
+            // FIXME!!
+            const sourceVisible = filterState.entityTypes[d.source.entity_type];
+            const targetVisible = filterState.entityTypes[d.target.entity_type];
+            return sourceVisible && targetVisible ? "visible" : "hidden";
+            // const sourceVisible = filterState.entityTypes[d.source.entity_type] && d.source.year >= filterState.yearRange.start && d.source.year <= filterState.yearRange.end;
+            // const targetVisible = filterState.entityTypes[d.target.type] && d.target.year >= filterState.yearRange.start && d.target.year <= filterState.yearRange.end;
+            // return sourceVisible && targetVisible ? "visible" : "hidden";
         });
+    };
+
+    console.log(filterState);
+        // Function to toggle nodes visibility based on entity type
+    function toggleNodes(entityType){ //, isVisible) {
+        // First, toggle the visibility of the nodes of the specified type.
+        filterState.entityTypes[entityType] = !filterState.entityTypes[entityType];
+        updateFilters();
+
+        // const nodesToToggle = node.filter(d => d.entity_type === entityType);
+        // nodesToToggle.each(function(d) {
+        //     d.isVisible = !d.isVisible; // Add an 'isVisible' property to toggle and track visibility state
+        // }).style("visibility", function(d) {
+        //     return d.isVisible ? "visible" : "hidden";
+        // });
+
+        // // Then, for each link, determine its visibility based on the visibility of its source and target nodes.
+        // link.style("visibility", function(d) {
+        //     // A link is visible only if both source and target nodes are visible.
+        //     const sourceVisibility = d.source.isVisible !== false; // Treat undefined as true for initial state
+        //     const targetVisibility = d.target.isVisible !== false;
+        //     return sourceVisibility && targetVisibility ? "visible" : "hidden";
+        // });
 
     };    
 

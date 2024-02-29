@@ -57,7 +57,6 @@ def create_relationship_types(sheets, db):
     relationship_types_df = get_sheet_by_name(sheets, 'Relationships')
     relationship_types = defaultdict(lambda: {})
     for i, r in relationship_types_df.iterrows():
-        print(r)
         rt = RelationshipType(source_entity_type=db.entity_types[r['Entity 1']],
                              target_entity_type=db.entity_types[r['Entity 2']],
                              name=r['Name'])
@@ -73,7 +72,6 @@ def create_fields(sheets, db):
         sheet = sheets[entity_type_name]
         print('Adding Fields for entity', entity_type_name)
         for c in sheet.columns:
-            print('  Field', c)
             if (c in db.relationship_types[entity_type_name] or 
                 re.match(r'.*\.[0-9]+$', c)): 
                 # skip relationship columns. for duplicate columns, pandas appends .1, .2 etc. 
@@ -94,7 +92,6 @@ def create_fields(sheets, db):
 def iter_regular_fields(row, entity_type, db):
     # Iterate over fields that are not special (e.g., key, image_field, etc.)
     for col, val in row.to_dict().items():
-        print('col=', col, '...', 'sdfn=', entity_type.start_date_field_name)
         if not (col in db.relationship_types[entity_type.name] or 
                 re.match(r'.*\.[0-9]+$', col) or
                 col.lower() == 'key' or
@@ -106,7 +103,6 @@ def iter_regular_fields(row, entity_type, db):
             yield (col, val)
 
 def parse_datetime(value):
-    print(type(value), '-', value, '-')
     if value is None or pd.isnull(value):
         return None
     # if looks like a year
@@ -212,6 +208,12 @@ def get_sheet_by_name(sheets, name):
 def node2jsonid(n):
     return n.entity_type.name + '__' + n.key
 
+def none2str(v):
+    if v is None:
+        return ''
+    else:
+        return v
+
 def db2json():
     nodes = []
     for e in Entity.objects.all():
@@ -220,8 +222,10 @@ def db2json():
             'key': e.key,
             'name': e.name,
             'entity_type': e.entity_type.name,
-            'color': e.entity_type.color,
-            'image_url': e.get_value('Image URL')
+            'color': none2str(e.entity_type.color),
+            'image_url': none2str(e.image_url),
+            'start_date': none2str(e.start_date),
+            'end_date': none2str(e.end_date),
         })
     links = []
     for r in Relationship.objects.all():
