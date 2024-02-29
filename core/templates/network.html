@@ -39,20 +39,12 @@
             top: 100px; /* Adjust the top position as needed */
             left: 5vw; /* Adjust the left position as needed */
             z-index: 500; /* Ensure the search input is above other elements */
-*/        }    
+        }    
         svg {
             width: 100%; /* 90vw;*/
             height: 90vh; /* fraction of screen */
             background-color: whitesmoke; /* Optional: Add background color */
         }       
-        #details {
-/*            width: 10vw; /* Set the width as needed */
-/*            height: 90vh; /* Set the height as needed */
-/*            background-color: lightgray; /* Set the background color */*/
-/*            position: absolute;*/
-/*            top: 0; /* Adjust the top position as needed */*/
-/*            left: calc(100% + 1px); /* Position to the right of the svg element */*/*/
-*/        }     
         #button-container {
             margin-bottom: 10px;
         }
@@ -63,6 +55,12 @@
             background-color: green; /* Change the background color for active buttons */
         }
 
+       #slider-container {
+           position: relative;
+           height:30px;
+           background-color: #eeeef5;
+       }
+
     </style>
 {% endblock %}
 
@@ -71,19 +69,29 @@
 <div class="mycontainer">
     <div class="row">
         <!-- Toggle buttons -->
-        <div id="searchContainer" class="col-md-1"></div>
-        <div id="button-container" class="col-md-3"></div>
-        <div id="button-container" class="col-md-2">pinch to zoom &nbsp;&nbsp;&nbsp;&nbsp; click and drag to pan</div>
+        <div class="col-md-1"></div>
+        <div id="button-container" class="col-md-4"></div>
+        <div class="col-md-2">pinch to zoom &nbsp;&nbsp;&nbsp;&nbsp; click and drag to pan</div>
         <!-- Search bar -->
-        <div id="searchContainer" class="col-md-2">
+        <div class="col-md-2">
             <i class="fa fa-search"></i> <input type="text" id="searchInput" placeholder="Search for nodes...">
         </div>
     </div>
     <div class="row">
+        <!-- Date slider -->
+        <div class="col-md-2"></div>
+        <div id="slider-container" class="col-md-4"></div>
+    </div>
+    <div class="row">
+        <!-- Labels for Date slider -->
+        <div class="col-md-2"></div>
+        <div id="range-label" class="col-md-4"></div>
+    </div>
+    <div class="row">
         <!-- Network -->
-        <div id="searchContainer" class="col-md-1"></div>
+        <div class="col-md-1"></div>
         <div class="col-md-8">
-            <svg id="network">hello</svg>
+            <svg id="network"></svg>
         </div>
         <!-- Entity details -->
         <div class="col-md-3">
@@ -134,13 +142,15 @@
 
     const width = svg.node().getBoundingClientRect().width;
     const height = svg.node().getBoundingClientRect().height;
+    const firstDate = Math.min(...nodes.filter(node => node.start_date !== "").map(node => node.start_date));
+    const lastDate = Math.max(...nodes.filter(node => node.end_date !== "").map(node => node.end_date));
 
     // Keep track of all filtering states.
     const filterState = {
         entityTypes: {},
         yearRange: {
-            start: Math.min(...nodes.filter(node => node.start_date !== "").map(node => node.start_date)),
-            end: Math.max(...nodes.filter(node => node.end_date !== "").map(node => node.end_date))
+            start: firstDate,
+            end: lastDate,
         }
     };
     nodes.forEach(node => {
@@ -166,21 +176,40 @@
         // toggleNodes(entityType, true);            
     });
 
+    // Add date range slider.
+    var slider = createD3RangeSlider(firstDate, lastDate, "#slider-container", true, 800);
+    slider.onChange(function(newRange){
+        d3.select("#range-label").html(newRange.begin + " &mdash; " + newRange.end);
+        filterState.yearRange['start'] = newRange.begin;
+        filterState.yearRange['end'] = newRange.end;
+        updateFilters();
+        console.log(newRange.begin, newRange.end);
+
+    });
+    slider.range(firstDate,lastDate);
+
+    function rangeOverlap(start, end, start2, end2) {
+        return start <= end2 && end >= start2;
+    }
 
     function updateFilters() {
         // Update node visibility based on type and year range
         node.style("visibility", function(d) {
             const typeVisible = filterState.entityTypes[d.entity_type];
-            // const yearVisible = d.year >= filterState.yearRange.start && d.year <= filterState.yearRange.end;
-            // return typeVisible && yearVisible ? "visible" : "hidden";
-            return typeVisible ? "visible" : "hidden";
+            const yearVisible = rangeOverlap(d.start_date, d.end_date, 
+                                             filterState.yearRange.start, filterState.yearRange.end);
+            return typeVisible && yearVisible ? "visible" : "hidden";
         });
 
         // Update link visibility based on the visibility of its source and target nodes
         link.style("visibility", function(d) {
-            // FIXME!!
-            const sourceVisible = filterState.entityTypes[d.source.entity_type];
-            const targetVisible = filterState.entityTypes[d.target.entity_type];
+            const sourceVisible = filterState.entityTypes[d.source.entity_type] && 
+                                  rangeOverlap(d.source.start_date, d.source.end_date, 
+                                               filterState.yearRange.start, filterState.yearRange.end);
+            const targetVisible = filterState.entityTypes[d.target.entity_type] &&
+                                  rangeOverlap(d.target.start_date, d.target.end_date, 
+                                               filterState.yearRange.start, filterState.yearRange.end);
+
             return sourceVisible && targetVisible ? "visible" : "hidden";
             // const sourceVisible = filterState.entityTypes[d.source.entity_type] && d.source.year >= filterState.yearRange.start && d.source.year <= filterState.yearRange.end;
             // const targetVisible = filterState.entityTypes[d.target.type] && d.target.year >= filterState.yearRange.start && d.target.year <= filterState.yearRange.end;
@@ -459,6 +488,7 @@
             filterNodes(searchQuery);
         });
     });        
+    updateFilters();
 
 </script>
 {% endblock %}
