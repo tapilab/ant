@@ -40,7 +40,7 @@
             left: 5vw; /* Adjust the left position as needed */
             z-index: 500; /* Ensure the search input is above other elements */
         }    
-        svg {
+        #network {
             width: 100%; /* 90vw;*/
             height: 90vh; /* fraction of screen */
             background-color: whitesmoke; /* Optional: Add background color */
@@ -55,11 +55,67 @@
             background-color: green; /* Change the background color for active buttons */
         }
 
-       #slider-container {
-           position: relative;
-           height:30px;
-           background-color: #eeeef5;
-       }
+        #slider-container {
+            position: relative;
+            height:30px;
+            background-color: #eeeef5;
+        }
+        .slider-container {
+            background-color: #f2f2f9;
+        }
+
+        .slider {
+            position: absolute;
+            border: 1px solid #AAB;
+            background: #BCE;
+            height: 100%;
+            width: 58px;
+            top: 0px;
+            cursor: move;
+            /*margin:-0.5px;*/
+        }
+
+        .slider .handle {
+            position: absolute;
+            height: 9px;
+            width: 9px;
+            border: 1px solid #AAB;
+            background: #9AC;
+
+            /* Support for bootstrap */
+            box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            -webkit-box-sizing: border-box;
+        }
+
+        .slider .EE {
+            right: -4px;
+            cursor: e-resize;
+        }
+
+        .slider .WW {
+            cursor: w-resize;
+            left: -4px;
+        }
+
+        .slider .EE, .slider .WW {
+            top: 50%;
+            margin-top: -4px;
+        }
+
+        .play-container .button{
+            fill-opacity: 0.0;
+            stroke: #AAB;
+            stroke-width: 1.6;
+        }
+
+        .play-container .play, .play-container .stop {
+            fill: #BCE;
+            stroke: #AAB;
+            stroke-width: 1;
+        }
+
+
 
     </style>
 {% endblock %}
@@ -71,21 +127,20 @@
         <!-- Toggle buttons -->
         <div class="col-md-1"></div>
         <div id="button-container" class="col-md-4"></div>
-        <div class="col-md-2">pinch to zoom &nbsp;&nbsp;&nbsp;&nbsp; click and drag to pan</div>
+        <div class="col-md-3">pinch to zoom &nbsp;&nbsp;&nbsp;&nbsp; click and drag to pan</div>
         <!-- Search bar -->
         <div class="col-md-2">
             <i class="fa fa-search"></i> <input type="text" id="searchInput" placeholder="Search for nodes...">
         </div>
     </div>
-    <div class="row">
-        <!-- Date slider -->
-        <div class="col-md-2"></div>
-        <div id="slider-container" class="col-md-4"></div>
-    </div>
-    <div class="row">
-        <!-- Labels for Date slider -->
-        <div class="col-md-2"></div>
-        <div id="range-label" class="col-md-4"></div>
+    <div class="section">
+        <div class="col-md-1"></div>
+        <div class="col-md-5">
+            <!-- Date slider -->
+            <div id="slider-container"></div>
+            <!-- Labels for Date slider -->
+            <div id="range-label"></div>
+        </div>
     </div>
     <div class="row">
         <!-- Network -->
@@ -170,10 +225,7 @@
                 toggleNodes(entityType)
                 const isVisible = d3.select(this).classed("active");
                 d3.select(this).classed("active", !isVisible);
-                // toggleNodes(entityType, !isVisible);
             });
-        // Show nodes for the initial 'active' buttons
-        // toggleNodes(entityType, true);            
     });
 
     // Add date range slider.
@@ -183,11 +235,10 @@
         filterState.yearRange['start'] = newRange.begin;
         filterState.yearRange['end'] = newRange.end;
         updateFilters();
-        console.log(newRange.begin, newRange.end);
 
     });
     slider.range(firstDate,lastDate);
-
+    
     function rangeOverlap(start, end, start2, end2) {
         return start <= end2 && end >= start2;
     }
@@ -211,9 +262,6 @@
                                                filterState.yearRange.start, filterState.yearRange.end);
 
             return sourceVisible && targetVisible ? "visible" : "hidden";
-            // const sourceVisible = filterState.entityTypes[d.source.entity_type] && d.source.year >= filterState.yearRange.start && d.source.year <= filterState.yearRange.end;
-            // const targetVisible = filterState.entityTypes[d.target.type] && d.target.year >= filterState.yearRange.start && d.target.year <= filterState.yearRange.end;
-            // return sourceVisible && targetVisible ? "visible" : "hidden";
         });
     };
 
@@ -223,29 +271,12 @@
         // First, toggle the visibility of the nodes of the specified type.
         filterState.entityTypes[entityType] = !filterState.entityTypes[entityType];
         updateFilters();
-
-        // const nodesToToggle = node.filter(d => d.entity_type === entityType);
-        // nodesToToggle.each(function(d) {
-        //     d.isVisible = !d.isVisible; // Add an 'isVisible' property to toggle and track visibility state
-        // }).style("visibility", function(d) {
-        //     return d.isVisible ? "visible" : "hidden";
-        // });
-
-        // // Then, for each link, determine its visibility based on the visibility of its source and target nodes.
-        // link.style("visibility", function(d) {
-        //     // A link is visible only if both source and target nodes are visible.
-        //     const sourceVisibility = d.source.isVisible !== false; // Treat undefined as true for initial state
-        //     const targetVisibility = d.target.isVisible !== false;
-        //     return sourceVisibility && targetVisibility ? "visible" : "hidden";
-        // });
-
     };    
 
     // Layout network.
     const simulation = d3.forceSimulation(nodes)
         .force("link", d3.forceLink(links).id(d => d.id).distance(100))
         .force("charge", d3.forceManyBody().strength(-50)) // was -100
-        // .force("center", d3.forceCenter(svg.clientWidth / 2, svg.clientHeight / 2));
         .force("center", d3.forceCenter(width / 2, height / 2));
 
     let tickCount = 0;
