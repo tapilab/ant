@@ -52,7 +52,7 @@
             margin-right: 5px;
         }
         .active {
-            background-color: green; /* Change the background color for active buttons */
+            background-color: skyblue; /* Change the background color for active buttons */
         }
 
         #slider-container {
@@ -127,7 +127,7 @@
         <!-- Toggle buttons -->
         <div class="col-md-1"></div>
         <div id="button-container" class="col-md-4"></div>
-        <div class="col-md-3">pinch to zoom &nbsp;&nbsp;&nbsp;&nbsp; click and drag to pan</div>
+        <div class="col-md-2">pinch to zoom &nbsp;&nbsp;&nbsp;&nbsp; click and drag to pan</div>
         <!-- Search bar -->
         <div class="col-md-2">
             <i class="fa fa-search"></i> <input type="text" id="searchInput" placeholder="Search for nodes...">
@@ -238,7 +238,7 @@
 
     });
     slider.range(firstDate,lastDate);
-    
+
     function rangeOverlap(start, end, start2, end2) {
         return start <= end2 && end >= start2;
     }
