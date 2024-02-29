@@ -15,10 +15,16 @@ pip install -r requirements.txt
 
 ## Deploying locally
 
-`python manage.py runserver 8089`
+```
+python manage.py migrate
+python manage.py runserver 8089
+```
 
 This will run the server locally at port 8089 http://0.0.0.0:8089/
 
+## Loading data
+
+On first run, there will be no data. Go to the config page and enter the URL of a public-viewable Google Sheet in the ANT format. This will populate the database.
 
 ## Migrations
 
