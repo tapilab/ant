@@ -1,3 +1,18 @@
+## Setup
+
+1. Clone the repo
+`git clone https://github.com/tapilab/ant.git`
+2. Create and enter a virtual environment
+```
+virtualenv ant-v
+source ant-v/bin/activate
+```
+3. Install requirements
+```
+cd ant
+pip install -r requirements.txt
+```
+
 ## Deploying locally
 
 `python manage.py runserver 8089`
