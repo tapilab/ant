@@ -16,7 +16,7 @@ Including another URLconf
 """
 # from django.contrib import admin
 from django.urls import path
-
+from django.views.generic import TemplateView
 import core.views
 
 urlpatterns = [
@@ -26,6 +26,8 @@ urlpatterns = [
     path("entities/", core.views.entities, name="entities"),
     path("entity/", core.views.entity, name="entity"),
     path("network/", core.views.network, name="network"),
+    path("about/", TemplateView.as_view(template_name="about.html"), name="about")
+
     # Uncomment this and the entry in `INSTALLED_APPS` if you wish to use the Django admin feature:
     # https://docs.djangoproject.com/en/5.0/ref/contrib/admin/
     # path("admin/", admin.site.urls),
