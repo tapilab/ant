@@ -120,7 +120,6 @@ def create_entities(sheets, db):
         sheet = sheets[entity_type_name]    
         entity_type = db.entity_types[entity_type_name]
         for _, row in sheet.iterrows():
-            print(row)
             key = get_ignore_case(row, 'key')
             if pd.isnull(key):
                 raise ValueError('In sheet %s, cannot find Key field for row %s' % (entity_type_name, str(row)))
