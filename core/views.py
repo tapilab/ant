@@ -6,8 +6,19 @@ from .models import *
 from .util import import_from_google_sheet
 
 
-def index(request):
-    return render(request, "index.html")
+#def index(request):
+    #return render(request, "index.html")
+
+def index(request):  
+    try:
+        customizations = UserEdits.objects.latest('id')  # Retrieve the latest UserEdits object from the database
+    except UserEdits.DoesNotExist:
+        customizations = None
+
+    context = {
+        'customizations': customizations,  # Pass customizations object to the template context
+    }  
+    return render(request, 'index.html', context)
 
 
 def db(request):

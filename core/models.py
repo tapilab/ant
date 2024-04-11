@@ -3,6 +3,15 @@ import gzip
 import json
 
 
+class UserEdits(models.Model):
+    title = models.CharField(max_length=255, null=False)
+    subtitle = models.CharField(max_length=255, default = '')
+    contributors = models.CharField(max_length=255, default='')
+
+    def __str__(self):
+        return f"{self.title} - {self.subtitle} - {self.contributors}"
+
+
 class EntityType(models.Model):
     name = models.CharField(max_length=255, null=False)
     title_field_name = models.CharField(max_length=255, null=False)

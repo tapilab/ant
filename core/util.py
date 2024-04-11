@@ -18,6 +18,22 @@ class DB:
     def __init__(self):
         pass
 
+
+def get_customizations(sheets):
+    """
+   Sets user customizations, ie Title, subtitle, etc
+    """
+    customization_df = get_sheet_by_name(sheets, 'Customizations')
+    print("Sheet:", customization_df)
+    
+    customizations = UserEdits(title=customization_df.iloc[0,0], 
+                               subtitle=customization_df.iloc[0,1], 
+                               contributors=customization_df.iloc[0,2])                        
+    customizations.save()
+    # Save title to database 
+    return customizations
+    
+
 def validate_entity_type_columns(df):
     cols = [c.lower() for c in df.columns]
     required = ['Type', 'Title Field', 'Image Field', 'Color', 'Start Date Field', 'End Date Field']
@@ -199,8 +215,8 @@ def get_sheet_by_name(sheets, name):
     sheets...dict from sheet name -> DataFrame
     name.....string for sheet name to return
     """ 
-    for sheet_name, sheet in sheets.items():
-        if sheet_name.lower() == name.lower():            
+    for sheet_name, sheet in sheets.items():   
+        if sheet_name.lower() == name.lower():        
             return sheet
     return None
 
@@ -259,6 +275,8 @@ def import_from_google_sheet(url):
         db.entities = create_entities(sheets, db)
         db.relationships = create_relationships(sheets, db)
         print('entities')
+
+        db.custom = get_customizations(sheets)
         Network(compressed_json=gzip.compress(db2json())).save()
         return True, "Success!"
     except Exception as e:
