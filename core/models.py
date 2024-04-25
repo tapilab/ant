@@ -5,12 +5,19 @@ import json
 
 class UserEdits(models.Model):
     title = models.CharField(max_length=255, null=False)
-    subtitle = models.CharField(max_length=255, default = '')
-    contributors = models.CharField(max_length=255, default='')
+    subtitle = models.CharField(max_length=255, default = ' ')
+    contributors = models.CharField(max_length=255, default=' ')
+    logoURL = models.CharField(max_length=255, default= '  ')
 
     def __str__(self):
-        return f"{self.title} - {self.subtitle} - {self.contributors}"
+        return f"{self.title} - {self.subtitle} - {self.contributors}- {self.logoURL}"
 
+class About(models.Model):
+    blurb = models.CharField(max_length=255, default= '  ')
+
+    def __str__(self):
+        return self.blurb
+    
 
 class EntityType(models.Model):
     name = models.CharField(max_length=255, null=False)

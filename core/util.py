@@ -19,6 +19,17 @@ class DB:
         pass
 
 
+def get_about(sheets):
+    about_df = get_sheet_by_name(sheets, 'About')
+    print('sheet:', about_df)
+    if about_df.empty == False:
+        abouts = About(blurb=about_df.iloc[0,0])
+        abouts.save()
+    else:
+        abouts = About(blurb='') # if data frame is empty
+        abouts.save()
+    return abouts
+
 def get_customizations(sheets):
     """
    Sets user customizations, ie Title, subtitle, etc
@@ -28,9 +39,9 @@ def get_customizations(sheets):
     
     customizations = UserEdits(title=customization_df.iloc[0,0], 
                                subtitle=customization_df.iloc[0,1], 
-                               contributors=customization_df.iloc[0,2])                        
+                               contributors=customization_df.iloc[0,2],
+                               logoURL=customization_df.iloc[0,3])                        
     customizations.save()
-    # Save title to database 
     return customizations
     
 
@@ -277,6 +288,7 @@ def import_from_google_sheet(url):
         print('entities')
 
         db.custom = get_customizations(sheets)
+        db.about = get_about(sheets)
         Network(compressed_json=gzip.compress(db2json())).save()
         return True, "Success!"
     except Exception as e:
