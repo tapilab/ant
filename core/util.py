@@ -33,7 +33,7 @@ def get_customizations(sheets):
    Sets user customizations, ie Title, subtitle, etc
     """
     customization_df = get_sheet_by_name(sheets, 'Customizations')
-    if customization_df is not None:
+    if customization_df is not None and about_df.empty == False:
         print("Sheet:", customization_df)
         customizations = UserEdits(title=customization_df.iloc[0,0], 
                                    subtitle=customization_df.iloc[0,1], 
