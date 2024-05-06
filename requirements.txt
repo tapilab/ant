@@ -4,4 +4,5 @@ dj_database_url
 django_extensions
 openpyxl
 pandas
+psycopg2
 whitenoise
