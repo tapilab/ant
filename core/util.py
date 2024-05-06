@@ -21,25 +21,33 @@ class DB:
 
 def get_about(sheets):
     about_df = get_sheet_by_name(sheets, 'About')
+    abouts = None
     if about_df is not None and about_df.empty == False:
         abouts = About(blurb=about_df.iloc[0,0])
-        abouts.save()
     else:
         abouts = About(blurb='') # if data frame is empty
-        abouts.save()
+    abouts.save()
 
 def get_customizations(sheets):
     """
    Sets user customizations, ie Title, subtitle, etc
     """
     customization_df = get_sheet_by_name(sheets, 'Customizations')
-    if customization_df is not None and about_df.empty == False:
-        print("Sheet:", customization_df)
+    customizations = None
+    if customization_df is not None and customization_df.empty == False:
         customizations = UserEdits(title=customization_df.iloc[0,0], 
                                    subtitle=customization_df.iloc[0,1], 
                                    contributors=customization_df.iloc[0,2],
-                                   logoURL=customization_df.iloc[0,3])                        
-        customizations.save()
+                                   logoURL=customization_df.iloc[0,3])    
+                        
+    else:
+        customizations = UserEdits(title="ANT", 
+                           subtitle="Artistic Network Toolkit", 
+                           contributors="",
+                           logoURL="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Raphael_-_Fire_in_the_Borgo.jpg/639px-Raphael_-_Fire_in_the_Borgo.jpg")
+    customizations.save()
+
+    
         
 
 def validate_entity_type_columns(df):
