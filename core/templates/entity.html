@@ -15,7 +15,7 @@
 {% if entity.start_date %} <b>Dates</b>: {{ entity.start_date }} - {{ entity.end_date }} <br>{% endif %}
 
 {% for value in entity.values.all %}
-  {% if value.field.name != "Image URL" %}
+ {% if value.field.name != "Image URL" %}
     <b>{{ value.field.name }}</b>: {{ value.value|default_if_none:"" }}
     <br>
   {% endif %}

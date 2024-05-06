@@ -9,6 +9,18 @@ from .util import import_from_google_sheet
 #def index(request):
     #return render(request, "index.html")
 
+def about(request):
+    try:
+        about = About.objects.latest('id')
+
+    except About.DoesNotExist:
+        about = None
+    print('About:', about)   
+    context = {
+        'about': about, 
+               }
+    return render(request, 'about.html', context)
+
 def index(request):  
     try:
         customizations = UserEdits.objects.latest('id')  # Retrieve the latest UserEdits object from the database
