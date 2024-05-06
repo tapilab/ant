@@ -12,10 +12,8 @@ from .util import import_from_google_sheet
 def about(request):
     try:
         about = About.objects.latest('id')
-
     except About.DoesNotExist:
         about = None
-    print('About:', about)   
     context = {
         'about': about, 
                }
@@ -110,5 +108,6 @@ def entity(request):
                      'relationships': relationships}) 
 
 def network(request):
+    obj = Network.objects.first()
     return render(request, 'network.html',
-        {'network_json': Network.objects.first().get_json()})
+        {'network_json': obj.get_json() if obj else '{}'})
