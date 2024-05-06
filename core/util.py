@@ -21,29 +21,26 @@ class DB:
 
 def get_about(sheets):
     about_df = get_sheet_by_name(sheets, 'About')
-    print('sheet:', about_df)
-    if about_df.empty == False:
+    if about_df is not None and about_df.empty == False:
         abouts = About(blurb=about_df.iloc[0,0])
         abouts.save()
     else:
         abouts = About(blurb='') # if data frame is empty
         abouts.save()
-    return abouts
 
 def get_customizations(sheets):
     """
    Sets user customizations, ie Title, subtitle, etc
     """
     customization_df = get_sheet_by_name(sheets, 'Customizations')
-    print("Sheet:", customization_df)
-    
-    customizations = UserEdits(title=customization_df.iloc[0,0], 
-                               subtitle=customization_df.iloc[0,1], 
-                               contributors=customization_df.iloc[0,2],
-                               logoURL=customization_df.iloc[0,3])                        
-    customizations.save()
-    return customizations
-    
+    if customization_df is not None:
+        print("Sheet:", customization_df)
+        customizations = UserEdits(title=customization_df.iloc[0,0], 
+                                   subtitle=customization_df.iloc[0,1], 
+                                   contributors=customization_df.iloc[0,2],
+                                   logoURL=customization_df.iloc[0,3])                        
+        customizations.save()
+        
 
 def validate_entity_type_columns(df):
     cols = [c.lower() for c in df.columns]
@@ -77,7 +74,6 @@ def create_entity_types(sheets):
                            )
             e.save()
             entity_types[name] = e
-            print('Added Entity Type', name)
     return entity_types
     
 def create_relationship_types(sheets, db):
@@ -89,7 +85,6 @@ def create_relationship_types(sheets, db):
                              name=r['Name'])
         rt.save()
         relationship_types[r['Entity 1']][r.Name] = rt
-        print('Added Relationship Type', r['Entity 1'], r.Name)
     return relationship_types
 
 def create_fields(sheets, db):
@@ -97,7 +92,6 @@ def create_fields(sheets, db):
     fields = defaultdict(lambda: {})
     for entity_type_name, entity_type in db.entity_types.items():
         sheet = sheets[entity_type_name]
-        print('Adding Fields for entity', entity_type_name)
         for c in sheet.columns:
             if (c in db.relationship_types[entity_type_name] or 
                 re.match(r'.*\.[0-9]+$', c)): 
@@ -190,7 +184,6 @@ def create_relationships(sheets, db):
                             relationship_type = db.relationship_types[entity_type_name][col]
                             entity1 = db.entities[entity_type_name][row.Key.lower()]
                             entity2_type = relationship_type.target_entity_type.name.strip()
-                            print(col, relationship_type.name, entity1.key, entity2_type, val)
                             entity2 = db.entities[entity2_type][val.lower()]
                             r = Relationship(relationship_type=relationship_type,
                                              source_entity=entity1,
@@ -287,8 +280,8 @@ def import_from_google_sheet(url):
         db.relationships = create_relationships(sheets, db)
         print('entities')
 
-        db.custom = get_customizations(sheets)
-        db.about = get_about(sheets)
+        get_customizations(sheets)
+        get_about(sheets)
         Network(compressed_json=gzip.compress(db2json())).save()
         return True, "Success!"
     except Exception as e:
