@@ -1,9 +1,12 @@
 {
   "name": "ANT",
-  "description": "ANT",
+  "description": "Artistic Network Toolkit",
   "image": "heroku/python",
   "repository": "https://github.com/tapilab/ant",
-  "keywords": ["python", "django"],
+  "keywords": ["art", "networks", "visualization"],
+  "addons": [
+    "heroku-postgresql:essential-2"
+  ],
   "env": {
     "DJANGO_SECRET_KEY": {
       "description": "The secret key for the Django application.",
