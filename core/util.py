@@ -11,8 +11,10 @@ import traceback
 def clear_db():
     # clear all tables in the database.
     for model in apps.get_models():
+        print(model)
         if not model.__module__.startswith('django') and model.__qualname__ != 'UserProfile':
             # don't clear user tables.
+            print('deleting', model)
             model.objects.all().delete()
 
 class DB:
