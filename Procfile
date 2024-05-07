@@ -6,6 +6,6 @@ web: gunicorn ant.wsgi
 # https://devcenter.heroku.com/articles/release-phase
 
 release: ./manage.py migrate --no-input
-worker: OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES python manage.py rqworker default
+worker: python manage.py rqworker default
 
 #notebook: jupyter notebook
