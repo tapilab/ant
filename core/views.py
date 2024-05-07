@@ -83,29 +83,6 @@ def index(request):
     }  
     return render(request, 'index.html', context)
 
-
-def db(request):
-    # If you encounter errors visiting the `/db/` page on the example app, check that:
-    #
-    # When running the app on Heroku:
-    #   1. You have added the Postgres database to your app.
-    #   2. You have uncommented the `psycopg` dependency in `requirements.txt`, and the `release`
-    #      process entry in `Procfile`, git committed your changes and re-deployed the app.
-    #
-    # When running the app locally:
-    #   1. You have run `./manage.py migrate` to create the database tables.
-
-    entity_types = EntityType.objects.all()
-    relationship_types = RelationshipType.objects.all()
-    entities = Entity.objects.all().prefetch_related('values')
-    return render(request, "db.html",
-        {"entity_types": entity_types, 
-         "relationship_types": relationship_types,
-         "entities": entities,
-         "values": Value.objects.all()})
-    # return render(request, "db.html", {"greetings": greetings})
-
-
 def check_job_status(request, job_id):
     queue = django_rq.get_queue('default')
     job = queue.fetch_job(job_id)
@@ -114,26 +91,21 @@ def check_job_status(request, job_id):
     return JsonResponse({'status': job.get_status(), 'result': job.result})
 
 def config(request):
-
-
-    # if request.user.is_authenticated:
-    if request.method == 'POST':
-        config_form = ConfigForm(request.POST)
-        if config_form.is_valid():
-            url = config_form.cleaned_data['google_sheet_url']
-            queue = django_rq.get_queue('default')
-            job = queue.enqueue(import_from_google_sheet, url)
-            return render(request, 'config.html', {'job_id': job.id, 'config_form': config_form})                
-            # success, message = import_from_google_sheet(url)
-            # return render(request, 'config.html',
-            #     {'config_form': config_form, 'success': success, 'message': message})
+    if request.user.is_authenticated:
+        if request.method == 'POST':
+            config_form = ConfigForm(request.POST)
+            if config_form.is_valid():
+                url = config_form.cleaned_data['google_sheet_url']
+                queue = django_rq.get_queue('default')
+                job = queue.enqueue(import_from_google_sheet, url)
+                return render(request, 'config.html', {'job_id': job.id, 'config_form': config_form})                
+        else:
+            config_form = ConfigForm()
+            return render(request, 'config.html', {'config_form': config_form, 'job_id': None})
+    elif not User.objects.exists():
+        return redirect('register')
     else:
-        config_form = ConfigForm()
-        return render(request, 'config.html', {'config_form': config_form, 'job_id': None})
-    # elif not User.objects.exists():
-    #     return redirect('register')
-    # else:
-    #     return redirect('login')
+        return redirect('login')
 
 
 def entities(request):

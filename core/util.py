@@ -273,7 +273,7 @@ def import_from_google_sheet(url):
         sheets = pd.read_excel(id2export_url(url2doc_id(url)), sheet_name=None, dtype=str)
         # remove all leading/trailing spaces everywhere.
         for s, df in sheets.items():
-            sheets[s] = df.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+            sheets[s] = df.map(lambda x: x.strip() if isinstance(x, str) else x)
     except Exception as e:
         return False, "Cannot find a sheet at that URL. Please navigate to the page of the Google sheet and copy the URL in your browser's address bar.\n" + str(traceback.format_exc())
     
