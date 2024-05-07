@@ -22,7 +22,6 @@ import core.views
 urlpatterns = [
     path("", core.views.index, name="index"),
     path("config/", core.views.config, name="config"),
-    path("db/", core.views.db, name="db"),
     path("entities/", core.views.entities, name="entities"),
     path("entity/", core.views.entity, name="entity"),
     path("network/", core.views.network, name="network"),
