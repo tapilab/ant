@@ -27,7 +27,7 @@ urlpatterns = [
     path("network/", core.views.network, name="network"),
     path("about/", core.views.about, name="about"),
     path('register/', core.views.register, name='register'),
-    path('login/', core.views.user_login, name='login'),
+    path('user_login/', core.views.user_login, name='user_login'),
     path('user_reset/', core.views.user_reset, name='user_reset'),
     path('check-job-status/<str:job_id>/', core.views.check_job_status, name='check-job-status'),
 

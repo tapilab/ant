@@ -6,6 +6,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 import django_rq
 
+import time
 from .forms import ConfigForm, SetEmailAndPasswordForm, UserResetForm
 from .models import *
 from .tasks import import_data
@@ -90,6 +91,10 @@ def check_job_status(request, job_id):
         return JsonResponse({'status': 'No such job.', 'result': ''})
     return JsonResponse({'status': job.get_status(), 'result': job.result})
 
+def foo():
+    pass
+
+
 def config(request):
     if request.user.is_authenticated:
         if request.method == 'POST':
@@ -97,6 +102,8 @@ def config(request):
             if config_form.is_valid():
                 url = config_form.cleaned_data['google_sheet_url']
                 queue = django_rq.get_queue('default')
+                # strange bug where only second job was run. tmpfix: adding dummy job.
+                job = queue.enqueue(foo)
                 job = queue.enqueue(import_from_google_sheet, url)
                 return render(request, 'config.html', {'job_id': job.id, 'config_form': config_form})                
         else:
@@ -105,7 +112,7 @@ def config(request):
     elif not User.objects.exists():
         return redirect('register')
     else:
-        return redirect('login')
+        return redirect('user_login')
 
 
 def entities(request):

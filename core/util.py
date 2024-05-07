@@ -268,6 +268,7 @@ def import_from_google_sheet(url):
     """
     Import all data from the google sheet at the provided url.
     """
+    print('importing data from google sheet')
     clear_db()
     try:
         sheets = pd.read_excel(id2export_url(url2doc_id(url)), sheet_name=None, dtype=str)

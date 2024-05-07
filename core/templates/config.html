@@ -49,6 +49,17 @@ To import data from a Google Sheet, enter the URL here.
 {% endblock %}
 
 {% block scripts %}
+<!-- <script>
+$('#config_form').submit(function(e) {
+    e.preventDefault();
+    var postData = $(this).serialize();
+    $.post('/config/', postData, function(data) {
+        // Handle response
+    });
+});
+</script> -->
+
+
     <script>
         $(document).ready(function() {
             const jobId = "{{ job_id }}";
