@@ -6,7 +6,7 @@
   "keywords": ["art", "networks", "visualization"],
   "addons": [
     "heroku-postgresql:essential-2",
-    "heroku-rediscloud"
+    "rediscloud"
   ],
   "env": {
     "DJANGO_SECRET_KEY": {
