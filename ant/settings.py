@@ -13,8 +13,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 import secrets
 from pathlib import Path
-
 import dj_database_url
+from urllib.parse import urlparse
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_extensions",
+    "django_rq",
     "core",
 ]
 
@@ -231,3 +232,22 @@ LOGGING = {
 }
 
 SESSION_COOKIE_AGE = 1209600
+
+redis_url = urlparse(os.environ.get('REDISCLOUD_URL'))
+# CACHES = {
+#         'default': {
+#             'BACKEND': 'redis_cache.RedisCache',
+#             'LOCATION': '%s:%s' % (redis_url.hostname, redis_url.port),
+#             'OPTIONS': {
+#                 'PASSWORD': redis_url.password,
+#                 'DB': 0,
+#         }
+#     }
+# }
+
+RQ_QUEUES = {
+    'default': {
+        'URL': os.environ.get('REDISCLOUD_URL'),  # Use the Heroku Redis URL in production
+        'DEFAULT_TIMEOUT': 500,
+    },
+}

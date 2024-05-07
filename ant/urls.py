@@ -30,6 +30,8 @@ urlpatterns = [
     path('register/', core.views.register, name='register'),
     path('login/', core.views.user_login, name='login'),
     path('user_reset/', core.views.user_reset, name='user_reset'),
+    path('check-job-status/<str:job_id>/', core.views.check_job_status, name='check-job-status'),
+
     # Uncomment this and the entry in `INSTALLED_APPS` if you wish to use the Django admin feature:
     # https://docs.djangoproject.com/en/5.0/ref/contrib/admin/
     # path("admin/", admin.site.urls),

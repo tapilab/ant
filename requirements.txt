@@ -2,7 +2,10 @@ django
 gunicorn
 dj_database_url
 django_extensions
+django-rq
 openpyxl
 pandas
 psycopg2
+redis
+rq
 whitenoise

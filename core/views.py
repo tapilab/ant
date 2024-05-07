@@ -1,12 +1,14 @@
+from collections import defaultdict
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import AuthenticationForm
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
-from collections import defaultdict
+import django_rq
 
 from .forms import ConfigForm, SetEmailAndPasswordForm, UserResetForm
 from .models import *
+from .tasks import import_data
 from .util import import_from_google_sheet
 
 
@@ -103,22 +105,35 @@ def db(request):
          "values": Value.objects.all()})
     # return render(request, "db.html", {"greetings": greetings})
 
+
+def check_job_status(request, job_id):
+    queue = django_rq.get_queue('default')
+    job = queue.fetch_job(job_id)
+    if job is None:
+        return JsonResponse({'status': 'No such job.', 'result': ''})
+    return JsonResponse({'status': job.get_status(), 'result': job.result})
+
 def config(request):
-    if request.user.is_authenticated:
-        if request.method == 'POST':
-            config_form = ConfigForm(request.POST)
-            if config_form.is_valid():
-                url = config_form.cleaned_data['google_sheet_url']
-                success, message = import_from_google_sheet(url)
-                return render(request, 'config.html',
-                    {'config_form': config_form, 'success': success, 'message': message})
-        else:
-            config_form = ConfigForm()
-        return render(request, 'config.html', {'config_form': config_form})
-    elif not User.objects.exists():
-        return redirect('register')
+
+
+    # if request.user.is_authenticated:
+    if request.method == 'POST':
+        config_form = ConfigForm(request.POST)
+        if config_form.is_valid():
+            url = config_form.cleaned_data['google_sheet_url']
+            queue = django_rq.get_queue('default')
+            job = queue.enqueue(import_from_google_sheet, url)
+            return render(request, 'config.html', {'job_id': job.id, 'config_form': config_form})                
+            # success, message = import_from_google_sheet(url)
+            # return render(request, 'config.html',
+            #     {'config_form': config_form, 'success': success, 'message': message})
     else:
-        return redirect('login')
+        config_form = ConfigForm()
+        return render(request, 'config.html', {'config_form': config_form, 'job_id': None})
+    # elif not User.objects.exists():
+    #     return redirect('register')
+    # else:
+    #     return redirect('login')
 
 
 def entities(request):

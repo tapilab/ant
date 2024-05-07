@@ -4,6 +4,8 @@ web: gunicorn ant.wsgi
 # migrations are run as part of app deployment, using Heroku's Release Phase feature:
 # https://docs.djangoproject.com/en/5.0/topics/migrations/
 # https://devcenter.heroku.com/articles/release-phase
+
 release: ./manage.py migrate --no-input
+worker: OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES python manage.py rqworker default
 
 #notebook: jupyter notebook

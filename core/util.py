@@ -293,8 +293,3 @@ def import_from_google_sheet(url):
         return True, "Success!"
     except Exception as e:
         return False, str(e) + '\n' + str(traceback.format_exc())
-
-
-
-
-

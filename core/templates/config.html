@@ -34,38 +34,37 @@
 
 Here you can configure the app.
 
-<br>
+To import data from a Google Sheet, enter the URL here.
+<div class="loader" id="loader"></div>
+<form method="post" id="config_form">
+    {% csrf_token %}
+    {{ config_form.as_p }}
+    <button type="submit">Submit</button>
+</form>
 
-    <h2>Data URL</h2>
-    To import data from a Google Sheet, enter the URL here.
-    <div class="loader" id="loader"></div>
-    <form method="post" id="config_form">
-        {% csrf_token %}
-        {{ config_form.as_p }}
-        <button type="submit">Submit</button>
-    </form>
-    {% if success %}
-      <p style="color: green;">{{ message }}</p>
-    {% else %}
-      <p style="color: red;">{{ message }}</p>
-    {% endif %}
+{% if job_id %}
+  <p id="status">Processing data...</p>
+{% endif %}
 
 {% endblock %}
-
 
 {% block scripts %}
-
-<script>
-document.getElementById('config_form').addEventListener('submit', function() {
-  // Show the spinner
-  document.getElementById('loader').style.display = 'block';
-
-  // Optional: If you're handling the form submission via Ajax and you want to hide the spinner
-  // once the submission is complete, you would place the hide logic in the Ajax callback.
-  // For a regular form submission that reloads the page or redirects, the spinner will
-  // automatically be hidden as the page reloads.
-});
-</script>
-
+    <script>
+        $(document).ready(function() {
+            const jobId = "{{ job_id }}";
+            function checkStatus() {
+                $.ajax({
+                    url: '/check-job-status/' + jobId,
+                    success: function(data) {
+                        $('#status').text('Status: ' + data.status);
+                        if (data.status === 'finished') {
+                          $('#status').text('Done. ' + data.result[1]);
+                            clearInterval(interval);
+                        }
+                    }
+                });
+            }
+            var interval = setInterval(checkStatus, 5000); // Check every 5 seconds
+        });
+    </script>
 {% endblock %}
-
