@@ -8,12 +8,22 @@
     "heroku-postgresql:essential-2",
     "rediscloud"
   ],
+  "formation": {
+      "web": {
+          "quantity": 1,
+          "size": "eco"
+      },
+      "worker": {
+          "quantity": 1,
+          "size": "eco"
+      }
+  },
   "env": {
     "DJANGO_SECRET_KEY": {
       "description": "The secret key for the Django application.",
       "generator": "secret"
     }
-  },
+  },  
   "environments": {
     "test": {
       "scripts": {
