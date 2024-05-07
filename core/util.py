@@ -11,7 +11,9 @@ import traceback
 def clear_db():
     # clear all tables in the database.
     for model in apps.get_models():
-        model.objects.all().delete()
+        if not model.__module__.startswith('django') and model.__qualname__ != 'UserProfile':
+            # don't clear user tables.
+            model.objects.all().delete()
 
 class DB:
     # dummy class for in-memory db
@@ -40,12 +42,7 @@ def get_customizations(sheets):
                                    contributors=customization_df.iloc[0,2],
                                    logoURL=customization_df.iloc[0,3])    
                         
-    else:
-        customizations = UserEdits(title="ANT", 
-                           subtitle="Artistic Network Toolkit", 
-                           contributors="",
-                           logoURL="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Raphael_-_Fire_in_the_Borgo.jpg/639px-Raphael_-_Fire_in_the_Borgo.jpg")
-    customizations.save()
+        customizations.save()
 
     
         

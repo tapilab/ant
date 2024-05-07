@@ -71,8 +71,11 @@ def index(request):
     try:
         customizations = UserEdits.objects.latest('id')  # Retrieve the latest UserEdits object from the database
     except UserEdits.DoesNotExist:
-        customizations = None
-
+        customizations = UserEdits(title="ANT", 
+                   subtitle="Artistic Network Toolkit", 
+                   contributors="",
+                   logoURL="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Raphael_-_Fire_in_the_Borgo.jpg/639px-Raphael_-_Fire_in_the_Borgo.jpg")
+        customizations.save()
     context = {
         'customizations': customizations,  # Pass customizations object to the template context
     }  
