@@ -5,7 +5,8 @@
   "repository": "https://github.com/tapilab/ant",
   "keywords": ["art", "networks", "visualization"],
   "addons": [
-    "heroku-postgresql:essential-2"
+    "heroku-postgresql:essential-2",
+    "rediscloud",
   ],
   "env": {
     "DJANGO_SECRET_KEY": {
