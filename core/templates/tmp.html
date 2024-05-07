@@ -1,0 +1,237 @@
+        // v5
+        // const visibility = node.filter(d => d.entity_type === entityType)
+        // .style("visibility") === "hidden" ? "visible" : "hidden";
+        
+        // node.filter(d => d.entity_type === entityType).style("visibility", visibility);
+        // link.style("visibility", function(d) {
+        //     return (d.source.entity_type === entityType || d.target.entity_type === entityType) && visibility === "hidden" ? "hidden" : "visible";
+        // });
+
+        // v4
+        // const nodeSelection = svg.selectAll(".node")
+        //     .filter(d => d.entity_type === entityType);
+
+        // // Toggle visibility of nodes
+        // nodeSelection.style("display", isVisible ? "inline" : "none");
+
+        // // Toggle visibility of links based on the visibility of their source and target nodes
+        // const linkSelection = svg.selectAll(".link");
+        // linkSelection.style("display", d => {
+        //     const sourceNode = nodes.find(node => node.id === d.source);
+        //     const targetNode = nodes.find(node => node.id === d.target);
+            
+        //     if (!sourceNode || !targetNode) {
+        //         // If either sourceNode or targetNode is undefined, return "none" to hide the link
+        //         return "none";
+        //     }
+
+        //     const sourceVisible = isVisible || nodeSelection.data().some(node => node.id === sourceNode.id);
+        //     const targetVisible = isVisible || nodeSelection.data().some(node => node.id === targetNode.id);
+        //     return sourceVisible && targetVisible ? "inline" : "none";
+        // });
+
+        // v3
+        // const nodeSelection = svg.selectAll(".node")
+        //     .filter(d => d.entity_type === entityType);
+
+        // // Toggle visibility of nodes
+        // nodeSelection.style("display", isVisible ? "inline" : "none");
+
+        // // Toggle visibility of links based on the visibility of their source and target nodes
+        // const linkSelection = svg.selectAll(".link");
+        // linkSelection.style("display", d => {
+        //     const sourceNode = nodes.find(node => node.id === d.source);
+        //     const targetNode = nodes.find(node => node.id === d.target);
+        //     const sourceVisible = isVisible || nodeSelection.data().some(node => node.id === sourceNode.id);
+        //     const targetVisible = isVisible || nodeSelection.data().some(node => node.id === targetNode.id);
+        //     return sourceVisible && targetVisible ? "inline" : "none";
+        // });
+
+        // v2        
+        // const nodeSelection = svg.selectAll(".node")
+        //     .filter(d => d.entity_type === entityType);
+
+        // // Toggle visibility of nodes
+        // nodeSelection.style("display", isVisible ? "inline" : "none");
+
+        // // Toggle visibility of links based on the visibility of their source and target nodes
+        // const linkSelection = svg.selectAll(".link");
+        // linkSelection.style("display", d => {
+        //     const sourceVisible = isVisible || nodeSelection.data().some(node => node.id === d.source);
+        //     const targetVisible = isVisible || nodeSelection.data().some(node => node.id === d.target);
+        //     return sourceVisible && targetVisible ? "inline" : "none";
+        // });
+
+        // const nodeSelection = svg.selectAll(".node")
+        //     .filter(d => d.entity_type === entityType);
+        // const nodeSelection = nodes
+        //     .filter(d => d.entity_type === entityType);
+
+        // const nodeSelection = svg.selectAll(".node")
+        // .filter(d => d.entity_type === entityType);        
+        // node.filter(d => d.entity_type === entityType)
+        //     .classed("node-visible", isVisible);
+        // node.filter(d => d.entity_type === entityType)
+        //     .classed("node-invisible", !isVisible);
+
+        // const linkSelection = svg.selectAll(".link");
+        // linkSelection.style("display", d => {
+        //     const sourceVisible = isVisible || nodeSelection.data().find(node => node.id === d.source).length > 0;
+        //     const targetVisible = isVisible || nodeSelection.data().find(node => node.id === d.target).length > 0;
+        //     return sourceVisible && targetVisible ? "inline" : "none";
+        // });
+
+        // if (isVisible) {
+        //     link.
+        //         .filter(link => link.source.entity_type === entityType || link.target === clickedNode)
+        //         .map(link => link.source === clickedNode ? link.target.id : link.source.id);
+        // }
+        // nodeSelection.style("display", isVisible ? "inline" : "none");
+        
+<!-- {% extends "base.html" %}
+{% load static %}
+
+{% block css %}
+<style>
+        .node {
+            stroke: #fff;
+            stroke-width: 1.5px;
+        }
+        .link {
+            stroke: #999;
+            stroke-opacity: 0.6;
+        }
+       
+</style>
+{% endblock %}
+{% block content %}
+
+<svg id="network"></svg>
+
+<script>
+var networkData = {{ graph_json|safe }};
+
+const nodes = networkData.nodes;
+const links = networkData.links;
+
+// Set the dimensions and create the SVG container
+var width = 800, height = 600;
+var svg = d3.select("#network"),
+	width = +svg.attr("width"),
+	height = +svg.attr("height");
+
+// Create the simulation with forces
+var simulation = d3.forceSimulation(nodes)
+    .force("link", d3.forceLink(links).id(d => d.id))
+    .force("charge", d3.forceManyBody())
+    .force("center", d3.forceCenter(width / 2, height / 2));
+
+
+var tooltip = d3
+  .select("body")
+  .append("div") // the tooltip always "exists" as its own html div, even when not visible
+  .style("position", "absolute") // the absolute position is necessary so that we can manually define its position later
+  .style("visibility", "hidden") // hide it from default at the start so it only appears on hover
+  .style("background-color", "white")
+  .attr("class", "tooltip")
+  .text("a tooltip")
+
+
+tooltip_in = function(event, d) { 
+  return tooltip
+    .html("<h4>" + d.key + "</h4>") // add an html element with a header tag containing the name of the node.  This line is where you would add additional information like: "<h4>" + d.name + "</h4></br><p>" + d.type + "</p>"  Note the quote marks, pluses and </br>--these are necessary for javascript to put all the data and strings within quotes together properly.  Any text needs to be all one line in .html() here
+    .style("visibility", "visible") // make the tooltip visible on hover
+    .style("top", event.pageY + "px") // position the tooltip with its top at the same pixel location as the mouse on the screen
+    .style("left", event.pageX + "px"); // position the tooltip just to the right of the mouse location
+}
+
+// name a tooltip_out function to call when the mouse stops hovering
+tooltip_out = function() {
+  return tooltip
+    .transition()
+    .duration(50) // give the hide behavior a 50 milisecond delay so that it doesn't jump around as the network moves
+    .style("visibility", "hidden"); // hide the tooltip when the mouse stops hovering
+}
+
+
+// Create the link elements
+var link = svg.append("g")
+    .selectAll("line")
+    .data(links)
+    .enter().append("line")
+    	.style("stroke", "#aaa");
+
+// Create the node elements
+var node = svg.append("g")
+    .selectAll("circle")
+    .data(nodes)
+    .enter().append("circle")
+    .attr("r", 10)
+	.on("mouseover", tooltip_in)
+    .on("mouseout", tooltip_out);
+
+node.append('title')
+	.text(d => d.name)
+
+simulation
+    .nodes(nodes)
+    .on("tick", ticked);
+
+simulation.force("link")
+          .links(links);  
+
+// Update the positions
+function ticked() {
+    link
+        .attr("x1", function(d) { return d.source.x; })
+        .attr("y1", function(d) { return d.source.y; })
+        .attr("x2", function(d) { return d.target.x; })
+        .attr("y2", function(d) { return d.target.y; });
+
+    node
+        .attr("cx", function(d) { return d.x; })
+        .attr("cy", function(d) { return d.y; });
+}
+
+// Mouseover function to add labels
+function mouseover(d) {
+    container.append("text")
+        .attr("x", d.x + 10)
+        .attr("y", d.y)
+        .text(d.key) // Replace d.id with the appropriate label attribute
+        .attr("class", "node-label");
+}
+
+// Mouseout function to remove labels
+function mouseout(d) {
+    container.selectAll(".node-label").remove();
+}
+
+
+
+
+        // Zooming behaves strangely...network shoots off the screen sometimes.
+        // Create a zoom behavior
+        // const zoom = d3.zoom()
+        //     .scaleExtent([0.3, 10]) // Set the scale extent to restrict zooming range
+        //     .extent([[0, 0], [width, height]]) // Set the extent of the zoom behavior
+        //     .on("zoom", zoomed); // Define the zoom event handler
+
+        // Apply the zoom behavior to the SVG container
+        // svg.call(zoom);
+
+        // Define the zoomed function to handle zoom events
+        // function zoomed(event) {
+        //     // Get the current transform
+        //     // const { transform } = event;
+        //     // Update the transform attribute of the SVG container
+        //     svg.attr("transform", event.transform);
+        //     // // Constrain panning within the bounds of the SVG canvas
+        //     // const { x, y, k } = transform;
+        //     // svg.selectAll(".nodes, .links")
+        //     //     .attr("transform", `translate(${Math.min(0, Math.max(width * (1 - k), x))},${Math.min(0, Math.max(height * (1 - k), y))}) scale(${k})`);   
+
+</script>
+
+
+{% endblock %} -->

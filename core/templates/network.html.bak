@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+{% load static %}
+{% block css %}
+    <style>
+        .node {
+            stroke: #fff;
+            stroke-width: 2px;
+        }
+        
+        .link {
+            stroke: #999;
+            stroke-opacity: 0.6;
+        }
+        
+        .mytooltip {
+            position: absolute;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 5px;
+            display: none;
+            max-width: 200px; /* Set maximum width here */
+        }
+        .highlighted {
+            /* fill: yellow; /* Change the fill color to highlight */
+            stroke: yellow;
+            stroke-width: 4px;
+            r: 12;
+        }        
+        .highlighted_link {
+            stroke: yellow; /* Change the color to a desired color */
+            stroke-width: 10px; /* Increase the width to a desired value */
+        }
+        #searchContainer {
+            position: absolute;
+            top: 100px; /* Adjust the top position as needed */
+            left: 10vw; /* Adjust the left position as needed */
+            z-index: 500; /* Ensure the search input is above other elements */
+        }    
+        svg {
+            width: 100%; /* 90vw;*/
+            height: 90vh; /* fraction of screen */
+            background-color: whitesmoke; /* Optional: Add background color */
+        }       
+        #details {
+/*            width: 90vw; /* Set the width as needed */
+/*            height: 90vh; /* Set the height as needed */
+/*            background-color: lightgray; /* Set the background color */*/
+            position: absolute;
+/*            top: 0; /* Adjust the top position as needed */*/
+/*            left: calc(100% + 1px); /* Position to the right of the svg element */*/
+        }     
+    </style>
+{% endblock %}
+
+{% block content %}
+
+<div id="searchContainer">
+    <input type="text" id="searchInput" placeholder="Search for nodes...">
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-9">
+            <svg id="network">hello</svg>
+        </div>
+        <div class="col-md-3">
+            <div id="details"></div>
+        </div>
+    </div>
+</div>
+ <div id="mytooltip" class="mytooltip">
+        <div id="mytooltipText"></div>
+    	<img id="mytooltipImage" src="" alt="Tooltip Image" style="max-width: 100px; max-height: 100px;">
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const svg = d3.select("#network"),
+        width = svg.node().getBoundingClientRect().width,
+        height = svg.node().getBoundingClientRect().height;
+	var networkData = {{ network_json|safe }};
+	const nodes = networkData.nodes;
+	const links = networkData.links;
+    let zoomScale = .1;
+    let currentZoomState = d3.zoomIdentity;
+
+    const network_group = svg.append("g")
+    .attr("id", "network-group");
+
+    const link = network_group.append("g")
+        .attr("class", "links")
+        .selectAll("line")
+        .data(links)
+        .enter().append("line")
+        .attr("class", "link")
+        .attr("stroke-width", 2);
+
+    const node = network_group.append("g")
+        .attr("class", "nodes")
+        .selectAll("circle")
+        .data(nodes)
+        .enter().append("circle")
+        .attr("class", "node")
+        .attr("r", 8)
+        .attr("fill", d => d.color)
+        .on("mouseover", showTooltip)
+        .on("mouseout", hideTooltip)
+        .on("click", handleClick);
+
+    const simulation = d3.forceSimulation(nodes)
+        .force("link", d3.forceLink(links).id(d => d.id).distance(100))
+        .force("charge", d3.forceManyBody().strength(-10)) // was -100
+        // .force("center", d3.forceCenter(svg.clientWidth / 2, svg.clientHeight / 2));
+        .force("center", d3.forceCenter(width / 2, height / 2));
+
+    simulation.on("tick", () => {
+        link
+            .attr("x1", d => d.source.x)
+            .attr("y1", d => d.source.y)
+            .attr("x2", d => d.target.x)
+            .attr("y2", d => d.target.y);
+
+        node
+            .attr("cx", d => d.x)
+            .attr("cy", d => d.y);
+    })
+    .on('end', function() {
+        console.log('simulation end!!');
+        // d3.select('#network-group').call(zoom);
+        // Calculate the bounding box of the network
+        const bbox = network_group.node().getBBox();
+        console.log('bbox ' + bbox.width + ' ' + bbox.height);
+        // Calculate the scale needed to fit the entire network within the SVG container
+        zoomScale = Math.min(width/ bbox.width, height / bbox.height);
+           console.log('scale ' + zoomScale);
+        // Calculate the center of the bounding box
+        const centerX = bbox.x + bbox.width / 2;
+        const centerY = bbox.y + bbox.height / 2;
+
+        const newTransform = d3.zoomIdentity.translate(width / 2 - centerX * zoomScale, height / 2 - centerY * zoomScale).scale(zoomScale);
+        currentZoomState = newTransform;
+
+        // Apply the zoom transformation to center the network and scale it appropriately
+        network_group.transition().duration(500).call(zoom.transform, newTransform);
+    });
+
+    function showTooltip(event, d) {
+        const tooltip = d3.select("#mytooltip");
+        const tooltipImage = d3.select("#mytooltipImage");
+        const tooltipText = d3.select("#mytooltipText");
+
+        tooltipText.text(d.name);
+
+		if (d.image_url) {
+	        tooltipImage.style("display", "block")
+	                     .attr("src", d.image_url);
+		} else {
+	        tooltipImage.style("display", "none");
+		}
+
+        tooltip.style("display", "block")
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 20) + "px");
+    }
+
+    function hideTooltip() {
+        d3.select("#mytooltip").style("display", "none");
+    }
+
+
+    // Add a click event listener to the SVG canvas
+    svg.on("click", () => {
+        // Remove the highlighted class from all nodes
+        node.classed("highlighted", false);
+        link.classed("highlighted_link", false);
+        // network_group.transition().duration(500).attr("transform", currentZoomState);
+        // Prevent default behavior and bubbling if necessary
+        // d3.event.preventDefault();
+    });
+
+    // Define the handleClick function
+    function handleClick(event, clickedNode) {
+        // Check if the clicked node is already highlighted
+        // const isHighlighted = d3.select(this).classed("highlighted");
+        // Get the IDs of connected nodes
+        const connectedNodeIds = links
+            .filter(link => link.source === clickedNode || link.target === clickedNode)
+            .map(link => link.source === clickedNode ? link.target.id : link.source.id);
+        // if (isHighlighted) {
+        //     // Remove highlighting from this node and connected
+        //     d3.select(this).classed("highlighted", false);
+        //     node.filter(d => connectedNodeIds.includes(d.id))
+        //         .classed("highlighted", false);
+        // } else {
+        // Remove highlighting from previously clicked nodes (if any)
+        d3.selectAll(".highlighted").classed("highlighted", false);
+
+        // Highlight the clicked node
+        d3.select(this).classed("highlighted", true);
+
+        // Highlight the connected nodes
+        node.filter(d => connectedNodeIds.includes(d.id))
+            .classed("highlighted", true);
+        // Highlight links
+        connectedNodeIds.push(clickedNode);        
+        link.classed("highlighted_link", d=> (connectedNodeIds.includes(d.source.id) && d.target.id==clickedNode.id) || 
+                                             (d.source.id==clickedNode.id && connectedNodeIds.includes(d.target.id)));   
+
+
+        // Recenter on clicked node
+        // Obtain the position of the clicked node
+        const centerX = clickedNode.x; // X-coordinate of the clicked node
+        const centerY = clickedNode.y; // Y-coordinate of the clicked node
+
+        // Calculate the translation values to center the clicked node
+        const translateX = (width / 2 - centerX);// * zoomScale; // Adjust to center horizontally
+        const translateY = (height / 2 - centerY);// * zoomScale; // Adjust to center vertically
+
+
+        // Update the details div.
+        node2html(clickedNode, function(htmlContent) {
+            d3.select("#details")
+            .html(htmlContent);                    
+        });
+
+        // Calculate new translation and scale if needed
+        // Here, just translating without scaling:
+        const newTransform = d3.zoomIdentity.translate(translateX, translateY); // No scale change here
+        currentZoomState = newTransform;
+
+        // Apply the transformation
+        network_group.transition().duration(500).attr("transform", newTransform);
+
+        // Prevent propagation of the click event to the SVG canvas
+        event.stopPropagation();                
+    }
+
+    function node2html(node, callback) {
+        // Return html content for this entity.
+        fetch('/entity/?type=' + node.entity_type + '&key=' + node.key)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.text();
+          })
+          .then(html => {
+            const tempContainer = document.createElement('div');
+            d3.select(tempContainer).html(html);
+            // Select the specific <div> element you want
+            const targetDiv = tempContainer.querySelector('#entity');
+            if (targetDiv) {
+              callback(targetDiv.innerHTML);
+            } else {
+              console.error('The specified div was not found in the HTML');
+            }
+          })
+          .catch(error => {
+            console.error('There was a problem fetching the HTML:', error);
+          });
+    }
+    // Create a zoom behavior
+    const zoom = d3.zoom()
+        .scaleExtent([0.01, 4]) // Limit zoom scale
+        .on("zoom", zoomed);
+
+    // Apply zoom behavior to the SVG element
+    svg.call(zoom.transform, currentZoomState); // Initialize the zoom with currentZoomState
+    // d3.select('#network-group').call(zoom);
+
+
+    // Define the zoomed function to handle zooming and panning
+    function zoomed(event) {
+        network_group.attr("transform", event.transform);
+        // const { transform } = event;
+        // // Apply the zoom transformation to the network-group
+        // // Access the zoom scale (k)
+        // zoomScale = transform.k;
+        // // console.log('zs=' + zoomScale);
+        // // console.log('zoom identity ' + d3.zoomIdentity);
+        // currentZoomState = event.transform;
+        
+        // // zoomScale = event.transform;
+        // d3.select('#network-group')
+        // .attr("transform", currentZoomState);
+        // .attr("transform", zoomScale);
+    }
+
+    // Function to filter nodes based on search query
+    function filterNodes(searchQuery) {
+        if (searchQuery) {
+            const filteredNodes = nodes.filter(node => node.name.toLowerCase().includes(searchQuery.toLowerCase()));
+            const filteredNodeIds = filteredNodes.map(node => node.id);
+
+            // Update node selection to display only filtered nodes
+            // ... or just highlight them.       
+            if (filteredNodes.length != 0) {
+                node.classed("highlighted", d => filteredNodeIds.includes(d.id));
+                // link.classed("highlighted_link", d=> filteredNodeIds.includes(d.source.id) && filteredNodeIds.includes(d.target.id))   
+                // Recenter plot
+                const translateX = width / 2 - filteredNodes[0].x; // Adjust to center horizontally
+                const translateY = height / 2 - filteredNodes[0].y; // Adjust to center vertically
+                // Apply the translation transform to the SVG container
+                network_group
+                .attr("transform", `translate(${translateX}, ${translateY})`);
+                d3.select("#"+filteredNodes.id).dispatch('click');
+            }
+            // node
+            //     .style("display", d => filteredNodeIds.includes(d.id) ? "block" : "none");
+
+            // // Update link selection to display only links connected to filtered nodes
+            // link
+            //     .style("display", d => filteredNodeIds.includes(d.source.id) && filteredNodeIds.includes(d.target.id) ? "block" : "none");
+        } else {
+            node.classed("highlighted", false);
+        }
+    }
+
+    function getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    }
+    // Event listener for search input field
+    document.getElementById("searchInput").addEventListener("input", function() {
+        const searchQuery = this.value.trim();
+        filterNodes(searchQuery);
+    });
+
+    // Initialize autocomplete for the search input field
+    $(function() {
+        const searchTerm = getQueryParam("search"); // Get search term from URL query parameter
+
+        // Initialize autocomplete
+        $("#searchInput").autocomplete({
+            source: function(request, response) {
+                const term = request.term.toLowerCase();
+                const filteredNodes = nodes.filter(node => node.name.toLowerCase().includes(term));
+                const nodeNames = filteredNodes.map(node => node.name);
+                response(nodeNames);
+            },
+            minLength: 1,
+            select: function(event, ui) {
+                const selectedNodeName = ui.item.value;
+                filterNodes(selectedNodeName);
+            }
+        });
+
+        // Set search input field value
+        $("#searchInput").val(searchTerm);
+
+        // Manually trigger filtering based on search query
+        filterNodes(searchTerm);
+
+        // Event listener for input event on search input field
+        $("#searchInput").on("input", function() {
+            const searchQuery = $(this).val().trim();
+            filterNodes(searchQuery);
+        });
+    });        
+    
+
+
+</script>
+{% endblock %}

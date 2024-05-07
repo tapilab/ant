@@ -90,6 +90,8 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+USERNAME_FIELD = 'email'
+
 ROOT_URLCONF = "ant.urls"
 
 TEMPLATES = [

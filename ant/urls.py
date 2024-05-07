@@ -27,8 +27,9 @@ urlpatterns = [
     path("entity/", core.views.entity, name="entity"),
     path("network/", core.views.network, name="network"),
     path("about/", core.views.about, name="about"),
-    #path("about/", TemplateView.as_view(template_name="about.html"), name="about")
-
+    path('register/', core.views.register, name='register'),
+    path('login/', core.views.user_login, name='login'),
+    path('user_reset/', core.views.user_reset, name='user_reset'),
     # Uncomment this and the entry in `INSTALLED_APPS` if you wish to use the Django admin feature:
     # https://docs.djangoproject.com/en/5.0/ref/contrib/admin/
     # path("admin/", admin.site.urls),

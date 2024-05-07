@@ -1,13 +1,61 @@
-from django.shortcuts import render
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.models import User
+from django.contrib.auth.forms import AuthenticationForm
+from django.http import HttpResponse
+from django.shortcuts import render, redirect
 from collections import defaultdict
 
-from .forms import ConfigForm
+from .forms import ConfigForm, SetEmailAndPasswordForm, UserResetForm
 from .models import *
 from .util import import_from_google_sheet
 
 
-#def index(request):
-    #return render(request, "index.html")
+def register(request):
+    if User.objects.exists():
+        return HttpResponse("Registration not allowed. A user already exists.", status=403)
+
+    if request.method == 'POST':
+        form = SetEmailAndPasswordForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('config')  # Redirect to a login page, for example
+    else:
+        form = SetEmailAndPasswordForm()
+    return render(request, 'register.html', {'form': form})
+
+def user_reset(request):
+    error_msg = ''
+    if request.method == 'POST':
+        form = UserResetForm(request.POST)
+        if form.is_valid():            
+            # check that security answer matches
+            if form.cleaned_data['answer'] == UserProfile.objects.first().security_answer.lower():
+                User.objects.all().delete()
+                UserProfile.objects.all().delete()
+                return redirect('register')
+            else:
+                error_msg = 'invalid answer'
+    else:
+        form = UserResetForm()
+    return render(request, 'reset_user.html', {
+        'form': form, 
+        'error_msg': error_msg,
+        'security_question': UserProfile.objects.first().security_question if UserProfile.objects.count() > 0 else ''})
+
+
+def user_login(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = authenticate(username=form.cleaned_data['username'],
+                                password=form.cleaned_data['password'])
+            if user is not None:
+                login(request, user)
+                return redirect('config')
+    else:
+        form = AuthenticationForm()
+
+    return render(request, 'login.html', {'form': form})
 
 def about(request):
     try:
@@ -53,16 +101,21 @@ def db(request):
     # return render(request, "db.html", {"greetings": greetings})
 
 def config(request):
-    if request.method == 'POST':
-        config_form = ConfigForm(request.POST)
-        if config_form.is_valid():
-            url = config_form.cleaned_data['google_sheet_url']
-            success, message = import_from_google_sheet(url)
-            return render(request, 'config.html',
-                {'config_form': config_form, 'success': success, 'message': message})
+    if request.user.is_authenticated:
+        if request.method == 'POST':
+            config_form = ConfigForm(request.POST)
+            if config_form.is_valid():
+                url = config_form.cleaned_data['google_sheet_url']
+                success, message = import_from_google_sheet(url)
+                return render(request, 'config.html',
+                    {'config_form': config_form, 'success': success, 'message': message})
+        else:
+            config_form = ConfigForm()
+        return render(request, 'config.html', {'config_form': config_form})
+    elif not User.objects.exists():
+        return redirect('register')
     else:
-        config_form = ConfigForm()
-    return render(request, 'config.html', {'config_form': config_form})
+        return redirect('login')
 
 
 def entities(request):
