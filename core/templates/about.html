@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="mycontainer">
+<div class="container" id="about_container">
     <h2> About </h2>
-    {{about.blurb}}
+    {{ about.blurb |safe }}
 </div>
 {% endblock %}

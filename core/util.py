@@ -37,13 +37,16 @@ def get_customizations(sheets):
    Sets user customizations, ie Title, subtitle, etc
     """
     customization_df = get_sheet_by_name(sheets, 'Customizations')
-    customizations = None
     if customization_df is not None and customization_df.empty == False:
-        customizations = UserEdits(title=customization_df.iloc[0,0], 
-                                   subtitle=customization_df.iloc[0,1], 
-                                   contributors=customization_df.iloc[0,2],
-                                   logoURL=customization_df.iloc[0,3])    
-                        
+        e = customization_df.iloc[0]
+        customizations = UserEdits(title=get_ignore_case(e, 'Title'),
+                                   subtitle=get_ignore_case(e, 'Subtitle'),
+                                   contributors=get_ignore_case(e, 'Contributors'),
+                                   logoURL=get_ignore_case(e, 'Logo URL'))
+        # customizations = UserEdits(title=customization_df.iloc[0,0], 
+        #                            subtitle=customization_df.iloc[0,1], 
+        #                            contributors=customization_df.iloc[0,2],
+        #                            logoURL=customization_df.iloc[0,3])    
         customizations.save()
 
     

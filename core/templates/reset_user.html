@@ -3,13 +3,13 @@
 
 {% block content %}
 <div class="container" id="reset_user">
-    <h2>Reset User</h2>
+    <h2>Reset User Login</h2>
+    To reset the login credentials, answer the security question you entered upon first registration.<br><br>
     <form method="post">
         {% csrf_token %}
         {{security_question}}
         {{ form.as_p }}
         <button type="submit">Submit</button>
-
         <p style="color: red;">{{error_msg}}</p>
     </form>
 </div>

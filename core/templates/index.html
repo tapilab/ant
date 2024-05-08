@@ -6,13 +6,18 @@
 <div class="jumbotron text-center">
   <div class="container">
     <!--<a href="/" class="lang-logo">-->
+    {% if customizations.logoURL %}
       <img width="50%" src="{{ customizations.logoURL }}"/>
+    {% endif %}
       <!--<img src="{% static 'lang-logo.png'%}">-->
-    </a>
     <!--<h1>Artist Network Toolkit</h1></-->
-    <h1>{{customizations.title}}</h1>
-    <p>{{customizations.subtitle}}</p>
-    <h4>{{customizations.contributors}}</h4>   
+    <h1>{{customizations.title |safe}}</h1>
+    {% if customizations.subtitle %}
+      <p>{{customizations.subtitle |safe}}</p>
+    {% endif %}
+    {% if customizations.contributors and customizations.contributors.strip %}
+      <h4>{{customizations.contributors |safe}}</h4>   
+    {% endif %}
     <a type="button" class="btn btn-lg btn-primary" href="https://github.com/tapilab/ant"><span class="glyphicon glyphicon-download"></span> Source on GitHub</a>
   </div>
 </div>

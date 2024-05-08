@@ -20,15 +20,15 @@ class UserProfile(models.Model):
 
 class UserEdits(models.Model):
     title = models.TextField(null=False)
-    subtitle = models.TextField(default = ' ')
-    contributors = models.TextField(default=' ')
-    logoURL = models.TextField(default= '  ')
+    subtitle = models.TextField(null=True)
+    contributors = models.TextField(null=True)
+    logoURL = models.TextField(null=True)
 
     def __str__(self):
         return f"{self.title} - {self.subtitle} - {self.contributors}- {self.logoURL}"
 
 class About(models.Model):
-    blurb = models.TextField(default= '  ')
+    blurb = models.TextField()
 
     def __str__(self):
         return self.blurb

@@ -65,10 +65,7 @@ def about(request):
         about = About.objects.latest('id')
     except About.DoesNotExist:
         about = None
-    context = {
-        'about': about, 
-               }
-    return render(request, 'about.html', context)
+    return render(request, 'about.html', {'about': about})
 
 def index(request):  
     try:
@@ -76,7 +73,7 @@ def index(request):
     except UserEdits.DoesNotExist:
         customizations = UserEdits(title="ANT", 
                    subtitle="Artistic Network Toolkit", 
-                   contributors="",
+                   contributors=None,
                    logoURL="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Raphael_-_Fire_in_the_Borgo.jpg/639px-Raphael_-_Fire_in_the_Borgo.jpg")
         customizations.save()
     context = {
