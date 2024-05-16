@@ -71,7 +71,7 @@ $('#config_form').submit(function(e) {
 
                         $('#status').text('Status: ' + data.status);
                         if (data.status === 'finished') {
-                          $('#status').text('Done. ' + data.result[1]);
+                          $('#status').html('Done. ' + data.result[1]);
                             clearInterval(interval);
                         }
                     }

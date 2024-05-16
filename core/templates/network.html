@@ -195,11 +195,17 @@
         .on("click", handleClick)
         .style("visibility", "visible"); // Ensure links are visible
 
+    function isInteger(str) {
+        const num = parseInt(str, 10);
+        return !isNaN(num) && num.toString() === str;
+    }
     const width = svg.node().getBoundingClientRect().width;
     const height = svg.node().getBoundingClientRect().height;
-    const firstDate = Math.min(...nodes.filter(node => node.start_date !== "").map(node => node.start_date));
-    const lastDate = Math.max(...nodes.filter(node => node.end_date !== "").map(node => node.end_date));
-
+    const firstDate = Math.min(...nodes.filter(node => node.start_date !== "" && isInteger(node.start_date)).map(node => node.start_date));
+    const lastDate = Math.max(...nodes.filter(node => node.end_date !== "" && isInteger(node.end_date)).map(node => node.end_date));
+    console.log(firstDate);
+    console.log(lastDate);
+    console.log(nodes)
     // Keep track of all filtering states.
     const filterState = {
         entityTypes: {},
@@ -240,6 +246,9 @@
     slider.range(firstDate,lastDate);
 
     function rangeOverlap(start, end, start2, end2) {
+        if (start=="" || end=="") {
+            return true;
+        }
         return start <= end2 && end >= start2;
     }
 

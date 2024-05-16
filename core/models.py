@@ -5,6 +5,9 @@ from django.dispatch import receiver
 import gzip
 import json
 
+# class Tenant(models.Model):
+#     name = models.TextField(null=False)
+#     slug = models.SlugField(unique=True)  # Used in the URL to identify the tenant
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")

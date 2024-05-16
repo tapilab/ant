@@ -11,10 +11,8 @@ import traceback
 def clear_db():
     # clear all tables in the database.
     for model in apps.get_models():
-        print(model)
         if not model.__module__.startswith('django') and model.__qualname__ != 'UserProfile':
             # don't clear user tables.
-            print('deleting', model)
             model.objects.all().delete()
 
 class DB:
@@ -23,7 +21,7 @@ class DB:
         pass
 
 
-def get_about(sheets):
+def get_about(sheets, warnings):
     about_df = get_sheet_by_name(sheets, 'About')
     abouts = None
     if about_df is not None and about_df.empty == False:
@@ -32,7 +30,7 @@ def get_about(sheets):
         abouts = About(blurb='') # if data frame is empty
     abouts.save()
 
-def get_customizations(sheets):
+def get_customizations(sheets, warnings):
     """
    Sets user customizations, ie Title, subtitle, etc
     """
@@ -68,7 +66,7 @@ def get_ignore_case(row, field):
     else:
         return str(row[c[0]])
 
-def create_entity_types(sheets):
+def create_entity_types(sheets, warnings):
     entity_types_df = get_sheet_by_name(sheets, 'Entities')
     validate_entity_type_columns(entity_types_df)
     entity_types = {}
@@ -86,7 +84,7 @@ def create_entity_types(sheets):
             entity_types[name] = e
     return entity_types
     
-def create_relationship_types(sheets, db):
+def create_relationship_types(sheets, db, warnings):
     relationship_types_df = get_sheet_by_name(sheets, 'Relationships')
     relationship_types = defaultdict(lambda: {})
     for i, r in relationship_types_df.iterrows():
@@ -97,17 +95,17 @@ def create_relationship_types(sheets, db):
         relationship_types[r['Entity 1']][r.Name] = rt
     return relationship_types
 
-def create_fields(sheets, db):
+def create_fields(sheets, db, warnings):
     # Add all Fields for each entity
     fields = defaultdict(lambda: {})
     for entity_type_name, entity_type in db.entity_types.items():
         sheet = sheets[entity_type_name]
         for c in sheet.columns:
-            if (c in db.relationship_types[entity_type_name] or 
-                re.match(r'.*\.[0-9]+$', c)): 
+            if (c in db.relationship_types[entity_type_name]
+                or re.match(r'.*\.[0-9]+$', c)): 
                 # skip relationship columns. for duplicate columns, pandas appends .1, .2 etc. 
                 # We assume these are relationship columns for now.
-                print('       skipping relationship', c)
+                # warnings.append('       skipping relationship', c)
                 continue
             field = Field(entity_type=entity_type,
                           name=c,
@@ -145,19 +143,39 @@ def parse_datetime(value):
         return parser.parse(value)
 
 
-def create_entities(sheets, db):
+def check_col_ignore_case(col_name, cols):
+    for c in cols:
+        if col_name.lower() == c.lower():
+            return True
+    return False
+
+def check_entity_columns(sheet, entity_type):
+    cols = sheet.columns
+    for c in [entity_type.title_field_name, entity_type.image_field_name, entity_type.start_date_field_name, entity_type.end_date_field_name]:
+        if not check_col_ignore_case(c, cols):
+            return "cannot find column %s in %s. columns are %s" % (c, entity_type.name, str(cols))
+    return None
+
+def create_entities(sheets, db, warnings):
     entities = defaultdict(lambda: {})
     for entity_type_name in db.entity_types:
         sheet = sheets[entity_type_name]    
         entity_type = db.entity_types[entity_type_name]
-        for _, row in sheet.iterrows():
+        # check that required columns exist:
+        result = check_entity_columns(sheet, entity_type)
+        if result is not None:
+            # return False, result
+            raise ValueError('Missing columns for %s: %s' % (entity_type_name, result))
+        for ri, row in sheet.iterrows():
             key = get_ignore_case(row, 'key')
             if pd.isnull(key):
-                raise ValueError('In sheet %s, cannot find Key field for row %s' % (entity_type_name, str(row)))
+                # raise ValueError('In sheet %s, cannot find Key field for row %s' % (entity_type_name, str(row)))
+                warnings.append('In sheet %s, cannot find Key field for row %d' % (entity_type_name,ri))
+                continue
             name = get_ignore_case(row, entity_type.title_field_name)
             if pd.isnull(name):
                 name = key # default to key for name
-                # raise ValueError('In sheet %s, cannot find Title Field %s for row %s' % (entity_type_name, entity_type.title_field_name, str(row)))
+                warnings.append('In sheet %s, cannot find Title Field %s for row %d (%s). Defaulting to Key' % (entity_type_name, entity_type.title_field_name, ri, row.Key))
             values = []
             for col, val in iter_regular_fields(row, entity_type, db):
                 v = Value(field=db.fields[entity_type_name][col], 
@@ -178,11 +196,11 @@ def create_entities(sheets, db):
             entities[entity_type_name][key.lower()] = entity    
     return entities
 
-def create_relationships(sheets, db):
+def create_relationships(sheets, db, warnings):
     relationships = defaultdict(lambda: [])
     for entity_type_name in db.entity_types:
         sheet = sheets[entity_type_name]    
-        for _, row in sheet.iterrows():
+        for ri, row in sheet.iterrows():
             if not pd.isnull(row.Key):
                 for col, val in row.to_dict().items():     
                     if pd.isnull(val): # nothing to add
@@ -200,7 +218,7 @@ def create_relationships(sheets, db):
                                              target_entity=entity2).save()    
                             relationships[col] = r
                         except Exception as e:
-                            raise ValueError('Cannot add relationship for %s from row %s\n%s' % (entity_type_name, row, str(e)))
+                            warnings.append('Cannot add relationship for %s from row %d (%s)\n%s' % (entity_type_name, ri, row.Key, str(e)))
     return relationships
     
 
@@ -282,18 +300,19 @@ def import_from_google_sheet(url):
         return False, "Cannot find a sheet at that URL. Please navigate to the page of the Google sheet and copy the URL in your browser's address bar.\n" + str(traceback.format_exc())
     
     try:      
+        warnings = []
         db = DB()
-        db.entity_types = create_entity_types(sheets)
-        db.relationship_types = create_relationship_types(sheets, db)
+        db.entity_types = create_entity_types(sheets, warnings)
+        db.relationship_types = create_relationship_types(sheets, db, warnings)
         # db.relationship_types
-        db.fields = create_fields(sheets, db)
-        db.entities = create_entities(sheets, db)
-        db.relationships = create_relationships(sheets, db)
+        db.fields = create_fields(sheets, db, warnings)
+        db.entities = create_entities(sheets, db, warnings)
+        db.relationships = create_relationships(sheets, db, warnings)
         print('entities')
 
-        get_customizations(sheets)
-        get_about(sheets)
+        get_customizations(sheets, warnings)
+        get_about(sheets, warnings)
         Network(compressed_json=gzip.compress(db2json())).save()
-        return True, "Success!"
+        return True, "Success! " + '<br>Warnings:<br>>>>' + '<br>>>> '.join(warnings) if len(warnings) > 0 else ''
     except Exception as e:
         return False, str(e) + '\n' + str(traceback.format_exc())

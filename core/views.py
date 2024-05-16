@@ -94,6 +94,7 @@ def foo():
 
 def config(request):
     if request.user.is_authenticated:
+    # if True:
         if request.method == 'POST':
             config_form = ConfigForm(request.POST)
             if config_form.is_valid():
