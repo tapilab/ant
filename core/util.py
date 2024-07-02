@@ -145,13 +145,14 @@ def parse_datetime(value):
 
 def check_col_ignore_case(col_name, cols):
     for c in cols:
-        if col_name.lower() == c.lower():
+        if col_name is not None and col_name.lower() == c.lower():
             return True
     return False
 
 def check_entity_columns(sheet, entity_type):
     cols = sheet.columns
-    for c in [entity_type.title_field_name, entity_type.image_field_name, entity_type.start_date_field_name, entity_type.end_date_field_name]:
+    # for c in [entity_type.title_field_name, entity_type.image_field_name, entity_type.start_date_field_name, entity_type.end_date_field_name]:
+    for c in [entity_type.title_field_name]: # , entity_type.image_field_name, entity_type.start_date_field_name, entity_type.end_date_field_name]:
         if not check_col_ignore_case(c, cols):
             return "cannot find column %s in %s. columns are %s" % (c, entity_type.name, str(cols))
     return None
@@ -201,7 +202,8 @@ def create_relationships(sheets, db, warnings):
     for entity_type_name in db.entity_types:
         sheet = sheets[entity_type_name]    
         for ri, row in sheet.iterrows():
-            if not pd.isnull(row.Key):
+            keyval = get_ignore_case(row, 'key')
+            if keyval is not None:
                 for col, val in row.to_dict().items():     
                     if pd.isnull(val): # nothing to add
                         continue
