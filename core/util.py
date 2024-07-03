@@ -179,11 +179,12 @@ def create_entities(sheets, db, warnings):
                 warnings.append('In sheet %s, cannot find Title Field %s for row %d (%s). Defaulting to Key' % (entity_type_name, entity_type.title_field_name, ri, row.Key))
             values = []
             for col, val in iter_regular_fields(row, entity_type, db):
-                v = Value(field=db.fields[entity_type_name][col], 
-                          entity_type=entity_type,
-                          value=str(val) if not pd.isnull(val) else None)
-                v.save()
-                values.append(v)
+                if not pd.isnull(val):
+                    v = Value(field=db.fields[entity_type_name][col], 
+                              entity_type=entity_type,
+                              value=str(val) if not pd.isnull(val) else None)
+                    v.save()
+                    values.append(v)
             entity = Entity(entity_type=entity_type, 
                             key=key,
                             name=name,
