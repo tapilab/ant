@@ -2,6 +2,8 @@
 
 ANT is a library designed to enable humanities scholars to create interactive, dynamic network visualizations with no coding or database expertise.
 
+For a demo, see https://www.artisticnetworktoolkit.org/.
+
 ## Quickstart
 
 1. Copy the [Ant Template](https://docs.google.com/spreadsheets/d/1_8s2AoH53qPSzP2bNYMtFqfsp6Y8E91laCpQ9v83hYw/edit?usp=drive_link) Google Sheet to your Google Drive (`File->Make a Copy`)
