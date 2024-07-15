@@ -6,6 +6,8 @@ For a demo, see https://www.artisticnetworktoolkit.org/.
 
 ## Quickstart
 
+To create a new website based on ANT using your own artistic dataset, please follow the steps below:
+
 1. Copy the [Ant Template](https://docs.google.com/spreadsheets/d/1_8s2AoH53qPSzP2bNYMtFqfsp6Y8E91laCpQ9v83hYw/edit?usp=drive_link) Google Sheet to your Google Drive (`File->Make a Copy`)
 2. Follow the instructions in the Template to populate a relational database.
 3. Create a link to your sheet that is viewable, but not editable, by anyone (`Share->Anyone on the internet with the link can view`)
