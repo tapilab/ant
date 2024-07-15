@@ -2,7 +2,7 @@
 
 ANT is a library designed to enable humanities scholars to create interactive, dynamic network visualizations with no coding or database expertise.
 
-For a demo, see https://www.artisticnetworktoolkit.org/.
+For a demo, see [https://www.artisticnetworktoolkit.org/](https://ant-demo-ba4781db2c7c.herokuapp.com/network/).
 
 ## Quickstart
 
