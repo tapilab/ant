@@ -7,6 +7,18 @@ For a demo, see [https://www.artisticnetworktoolkit.org/](http://artisticnetwork
 ## Features
 
 
+interactive interface to explore artistic connections | search and filter by keyword, time, and entity type
+:-: | :-:
+<video src="https://github.com/user-attachments/assets/a881cb51-ffd4-4f50-82d5-8afde57a97d5.mp4" width="200"></video> | <video src="https://github.com/user-attachments/assets/c767f943-7c11-4e25-b64b-b684e1313769.mp4" width="200"></video>
+
+
+
+
+
+
+
+
+
 ## Quickstart
 
 To create a new website based on ANT using your own artistic dataset, please follow the steps below:
