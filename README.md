@@ -2,7 +2,22 @@
 
 ANT is a library designed to enable humanities scholars to create interactive, dynamic network visualizations with no coding or database expertise.
 
-For a demo, see [https://www.artisticnetworktoolkit.org/](https://ant-demo-ba4781db2c7c.herokuapp.com/network/).
+For a demo, see [https://www.artisticnetworktoolkit.org/](http://artisticnetworktoolkit.org/).
+
+## Features
+
+
+interactive interface to explore artistic connections | search and filter by keyword, time, and entity type
+:-: | :-:
+<video src="https://github.com/user-attachments/assets/a881cb51-ffd4-4f50-82d5-8afde57a97d5.mp4" width="200"></video> | <video src="https://github.com/user-attachments/assets/c767f943-7c11-4e25-b64b-b684e1313769.mp4" width="200"></video>
+
+
+
+
+
+
+
+
 
 ## Quickstart
 
