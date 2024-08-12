@@ -60,11 +60,11 @@ def validate_entity_type_columns(df):
 def get_ignore_case(row, field):
     if pd.isnull(field) or field.strip()=='':
         return None
-    c = [i for i in row.index if i.lower()==field.lower()]
+    c = [i for i in row.index if i.lower().strip()==field.lower().strip()]
     if len(c) == 0 or c[0] not in row.index or pd.isnull(row[c[0]]):
         return None
     else:
-        return str(row[c[0]])
+        return str(row[c[0]]).strip()
 
 def create_entity_types(sheets, warnings):
     entity_types_df = get_sheet_by_name(sheets, 'Entities')
@@ -126,11 +126,11 @@ def iter_regular_fields(row, entity_type, db):
                 col.lower() == 'key' or
                 (not pd.isnull(entity_type.image_field_name) and col.lower() == entity_type.image_field_name.lower()) or
                 (not pd.isnull(entity_type.title_field_name) and col.lower() == entity_type.title_field_name.lower()) or
-                (not pd.isnull(entity_type.start_date_field_name) and col.lower() == entity_type.start_date_field_name.lower()) or
-                (not pd.isnull(entity_type.end_date_field_name) and col.lower() == entity_type.end_date_field_name.lower())
+                (not pd.isnull(entity_type.start_date_field_name) and col.lower().strip() == entity_type.start_date_field_name.lower().strip()) or
+                (not pd.isnull(entity_type.end_date_field_name) and col.lower().strip() == entity_type.end_date_field_name.lower().strip())
                 ): 
             yield (col, val)
-
+#  get_ignore_case(col, entity_type.end_date_field_name))
 def parse_datetime(value):
     if value is None or pd.isnull(value):
         return None
@@ -171,12 +171,12 @@ def create_entities(sheets, db, warnings):
             key = get_ignore_case(row, 'key')
             if pd.isnull(key):
                 # raise ValueError('In sheet %s, cannot find Key field for row %s' % (entity_type_name, str(row)))
-                warnings.append('In sheet %s, cannot find Key field for row %d' % (entity_type_name,ri))
+                warnings.append('In sheet %s, cannot find Key field for row %d' % (entity_type_name,ri+2))
                 continue
             name = get_ignore_case(row, entity_type.title_field_name)
             if pd.isnull(name):
                 name = key # default to key for name
-                warnings.append('In sheet %s, cannot find Title Field %s for row %d (%s). Defaulting to Key' % (entity_type_name, entity_type.title_field_name, ri, row.Key))
+                warnings.append('In sheet %s, cannot find Title Field %s for row %d (%s). Defaulting to Key' % (entity_type_name, entity_type.title_field_name, ri+2, row.Key))
             values = []
             for col, val in iter_regular_fields(row, entity_type, db):
                 if not pd.isnull(val):
