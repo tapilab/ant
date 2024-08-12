@@ -50,9 +50,10 @@
         }
         .button {
             margin-right: 5px;
+            background-color: gray;
         }
         .active {
-            background-color: skyblue; /* Change the background color for active buttons */
+            background-color: white; /*skyblue;*/ /* Change the background color for active buttons */
         }
 
         #slider-container {
@@ -203,6 +204,7 @@
     const height = svg.node().getBoundingClientRect().height;
     const firstDate = Math.min(...nodes.filter(node => node.start_date !== "" && isInteger(node.start_date)).map(node => node.start_date));
     const lastDate = Math.max(...nodes.filter(node => node.end_date !== "" && isInteger(node.end_date)).map(node => node.end_date));
+    // console.log(firstDate + '---' + lastDate)
     // Keep track of all filtering states.
     const filterState = {
         entityTypes: {},
@@ -223,6 +225,7 @@
     entityTypes.forEach(entityType => {
         buttonContainer.append("button")
             .attr("class", "button active")
+            .style("border", `4px solid ${nodes.find(node => node.entity_type === entityType).color}`)  // Set background color
             .text(entityType)
             .on("click", function() {
                 toggleNodes(entityType)
