@@ -78,10 +78,19 @@ def get_customizations():
         customizations.save()
     return customizations
 
+def get_sheet_url():
+    try:
+        sheet_url = GoogleSheet.objects.latest('id')  # Retrieve the latest GoogleSheet object from the database
+    except GoogleSheet.DoesNotExist as e:
+        sheet_url, _ = GoogleSheet.objects.update_or_create(id=1, defaults={'url': 'https://docs.google.com/spreadsheets/'})
+        sheet_url.save()
+    return sheet_url.url
+
 def index(request):  
     customizations = get_customizations()
     context = {
         'customizations': customizations,  # Pass customizations object to the template context
+        'sheet_url': get_sheet_url(),
     }  
     return render(request, 'index.html', context)
 
@@ -107,10 +116,10 @@ def config(request):
                 # strange bug where only second job was run. tmpfix: adding dummy job.
                 job = queue.enqueue(foo)
                 job = queue.enqueue(import_from_google_sheet, url)
-                return render(request, 'config.html', {'job_id': job.id, 'config_form': config_form})                
+                return render(request, 'config.html', {'job_id': job.id, 'config_form': config_form, 'customizations': get_customizations()})                
         else:
             config_form = ConfigForm()
-            return render(request, 'config.html', {'config_form': config_form, 'job_id': None})
+            return render(request, 'config.html', {'config_form': config_form, 'job_id': None, 'customizations': get_customizations()})
     elif not User.objects.exists():
         return redirect('register')
     else:

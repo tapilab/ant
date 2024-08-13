@@ -3,6 +3,10 @@
 
 {% block content %}
 
+
+
+
+
 <div class="jumbotron text-center">
   <div class="container">
     <!--<a href="/" class="lang-logo">-->
@@ -18,7 +22,17 @@
     {% if customizations.contributors and customizations.contributors.strip %}
       <h4>{{customizations.contributors |safe}}</h4>   
     {% endif %}
-    <a type="button" class="btn btn-lg btn-primary" href="https://github.com/tapilab/ant"><span class="glyphicon glyphicon-download"></span> Source on GitHub</a>
+    <a type="button" class="btn btn-lg btn-primary" href="{{sheet_url |safe}}">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/3/30/Google_Sheets_logo_%282014-2020%29.svg" alt="Google Sheets Logo" style="width: 24px; height: 24px; margin-left: 0px;"> Open Data</a>
+
+    <a type="button" class="btn btn-lg btn-primary" href="https://github.com/tapilab/ant">
+    <img src="https://img.icons8.com/?size=100&id=44900&format=png&color=000000" alt="Github Logo" style="width: 24px; height: 24px; margin-left: 0px;"> Open Source</a>
+
+
+
+    <!-- <a type="button" class="btn btn-lg btn-primary" href="https://github.com/tapilab/ant"><span class="glyphicon glyphicon-download"></span> Open Source</a> -->
+
+
   </div>
 </div>
 {% endblock %}

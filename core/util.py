@@ -295,6 +295,7 @@ def import_from_google_sheet(url):
     print('importing data from google sheet')
     clear_db()
     try:
+        GoogleSheet.objects.update_or_create(id=1, defaults={'url': url})
         sheets = pd.read_excel(id2export_url(url2doc_id(url)), sheet_name=None, dtype=str)
         # remove all leading/trailing spaces everywhere.
         for s, df in sheets.items():

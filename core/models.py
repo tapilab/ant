@@ -89,6 +89,9 @@ class Relationship(models.Model):
     target_entity = models.ForeignKey(Entity, related_name='target_relationship_set', on_delete=models.CASCADE, blank=False, null=False)    
 
 
+class GoogleSheet(models.Model):
+    url = models.TextField()
+
 class Network(models.Model):
     compressed_json = models.BinaryField()
 
