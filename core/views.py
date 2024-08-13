@@ -67,7 +67,7 @@ def about(request):
         about = None
     return render(request, 'about.html', {'about': about})
 
-def index(request):  
+def get_customizations():
     try:
         customizations = UserEdits.objects.latest('id')  # Retrieve the latest UserEdits object from the database
     except UserEdits.DoesNotExist:
@@ -76,6 +76,10 @@ def index(request):
                    contributors=None,
                    logoURL="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/Raphael_-_Fire_in_the_Borgo.jpg/639px-Raphael_-_Fire_in_the_Borgo.jpg")
         customizations.save()
+    return customizations
+
+def index(request):  
+    customizations = get_customizations()
     context = {
         'customizations': customizations,  # Pass customizations object to the template context
     }  
@@ -116,8 +120,11 @@ def config(request):
 def entities(request):
     entity_type = request.GET.get('type', '')  # Default to '' if 'name' is not provided
 
-    return render(request, 'entities.html', {'entity_type': entity_type,
-                  'entities': Entity.objects.filter(entity_type__name=entity_type)}) 
+    return render(request, 'entities.html', {
+                  'entity_type': entity_type,
+                  'entities': Entity.objects.filter(entity_type__name=entity_type),
+                  'customizations': get_customizations(),
+                  }) 
 
 def entity(request):
     entity_type = request.GET.get('type', '')
@@ -153,9 +160,11 @@ def entity(request):
     return render(request, 'entity.html',
                     {'entity_type': entity_type,
                      'entity': entity,
-                     'relationships': relationships}) 
+                     'relationships': relationships,
+                     'customizations': get_customizations()}) 
 
 def network(request):
     obj = Network.objects.first()
     return render(request, 'network.html',
-        {'network_json': obj.get_json() if obj else '{}'})
+        {'network_json': obj.get_json() if obj else '{}',
+         'customizations': get_customizations()})
