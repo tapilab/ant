@@ -15,15 +15,21 @@
 {% if entity.start_date %} <b>Dates</b>: {{ entity.start_date }} - {{ entity.end_date }} <br>{% endif %}
 
 {% for value in entity.values.all %}
- {% if value.field.name != "Image URL" %}
-    <b>{{ value.field.name }}</b>: {{ value.value|default_if_none:"" }}
+ {% if value.field.name != "Image URL" and value.field.name|lower != "notes" and value.field.name|lower != "note" %}
+    <b>{{ value.field.name }}</b>: {{ value.value |default_if_none:"" |safe }}
     <br>
   {% endif %}
 {% endfor %}
 
 {% if entity.image_url %}
   <img width="80%" src="{{ entity.image_url }}"/>
+  <br>
 {% endif %}
+
+{% if entity.notes|default:None %}
+  <b>Notes</b>: {{ entity.notes |default_if_none:"" |safe }}
+{% endif %}
+
 
 {% for relationship_type, related_entity in relationships %}
   {% if related_entity %}
