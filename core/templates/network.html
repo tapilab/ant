@@ -464,6 +464,8 @@
                     }
                 });
                 connectedNodeIds.push(...filteredNodeIds);  
+                // FIXME: this actually includes second degree neighbor edges.
+                // E.g., if A is the search term, and A-B, B-C, then B-C will be highlighted!
                 link.classed("highlighted_link", d=> 
                     (connectedNodeIds.includes(d.source.id) && connectedNodeIds.includes(d.target.id)));   
                 const n = filteredNodes[0];

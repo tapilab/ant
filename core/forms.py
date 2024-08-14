@@ -1,10 +1,20 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
-from .models import UserProfile
+from .models import UserProfile, GoogleSheet
 
 class ConfigForm(forms.Form):
     google_sheet_url = forms.CharField(label='Google Sheet URL', max_length=300)
+
+    def __init__(self, *args, **kwargs):
+        super(ConfigForm, self).__init__(*args, **kwargs)
+        try:
+            # Fetch the latest GoogleSheet object and set its URL as the initial value
+            latest_sheet = GoogleSheet.objects.latest('id')
+            self.fields['google_sheet_url'].initial = latest_sheet.url
+        except GoogleSheet.DoesNotExist:
+            # Handle the case where no GoogleSheet object exists
+            self.fields['google_sheet_url'].initial = ''
 
 class UserResetForm(forms.Form):
 
