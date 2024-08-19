@@ -30,6 +30,7 @@ urlpatterns = [
     path('user_login/', core.views.user_login, name='user_login'),
     path('user_reset/', core.views.user_reset, name='user_reset'),
     path('check-job-status/<str:job_id>/', core.views.check_job_status, name='check-job-status'),
+    path("robots.txt", TemplateView.as_view(template_name="robots.txt", content_type="text/plain")),
 
     # Uncomment this and the entry in `INSTALLED_APPS` if you wish to use the Django admin feature:
     # https://docs.djangoproject.com/en/5.0/ref/contrib/admin/
