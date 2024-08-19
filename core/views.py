@@ -145,7 +145,6 @@ def entity(request):
             entity.image_url = v.value
         elif v.field.name.lower() in ['notes', 'note']:
             entity.notes = v.value
-            print('found notes', v.value)
         else:
             setattr(entity, v.field.name, v.value)
 
