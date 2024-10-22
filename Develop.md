@@ -16,8 +16,7 @@ pip install -r requirements.txt
 ## Deploying locally
 
 ```
-python manage.py migrate
-python manage.py runserver 8089
+heroku local
 ```
 
 This will run the server locally at port 8089 http://0.0.0.0:8089/
