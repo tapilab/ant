@@ -116,6 +116,53 @@
             stroke-width: 1;
         }
 
+        #filter-container {
+            display: inline-block;
+            margin-left: 10px;
+            padding: 5px;
+            border: 0px;
+            width: auto;
+            height: auto;
+            white-space: nowrap;
+            flex-grow: 0;
+        }
+
+        .checkbox {
+            margin: 5px 0;
+        }
+
+        .checkbox label {
+            margin-left: 5px;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 200px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            padding: 10px;
+            overflow-y: auto;
+            max-height: 300px;
+        }
+     
+        .filter-item {
+            display: flex;
+            align-items: center;
+            font-size: 12px; 
+            font-weight: normal; 
+            white-space: nowrap; 
+        }
+
+        .filter-item label {
+            margin-left: 5px;
+        }
+        .section .d-flex {
+            display: flex;
+            align-items: center;
+            flex-wrap: nowrap;
+        }
 
 
     </style>
@@ -138,9 +185,12 @@
             <!-- Labels for Date slider -->
             <div id="range-label"></div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-3 d-flex align-items-center">
             <!-- Search bar -->
             <i class="fa fa-search"></i> <input type="text" id="searchInput" placeholder="Search for nodes...">
+            <!--Filter relationships-->
+            <div id="filter-container"><span class="glyphicon glyphicon-th-list"></span>                  
+            </div>
         </div>
     </div>
     <div class="row">
@@ -211,13 +261,25 @@
         yearRange: {
             start: firstDate,
             end: lastDate,
-        }
+        },
+        relationshipTypes: {}
     };
     nodes.forEach(node => {
         if (!filterState.entityTypes.hasOwnProperty(node.entity_type)) {
             filterState.entityTypes[node.entity_type] = true; // Initialize as visible
         }
     });
+
+    links.forEach(link => {
+    // Create the relationship key in the format: "SourceType RelationshipType TargetType"
+        const sourceType = getNodeEntityType(link.source);
+        const targetType = getNodeEntityType(link.target);
+        const relationshipKey = sourceType + " " + link.relationship_type + " " + targetType;
+    // Check if the relationship key is already present in filterState; if not, set it to true (visible)
+        if (!filterState.relationshipTypes.hasOwnProperty(relationshipKey)) {
+            filterState.relationshipTypes[relationshipKey] = true; // Initialize as visible
+        }       
+    })
 
     // Add toggle buttons
     const buttonContainer = d3.select("#button-container");
@@ -233,6 +295,44 @@
                 d3.select(this).classed("active", !isVisible);
             });
     });
+
+    // Add filter relationships dropdown
+    const filterContainer = d3.select("#filter-container");
+    const dropdownButton = filterContainer.append("button")
+        .attr("class", "dropdown-toggle")
+        .text("Filter relationships...")
+        .on("click", () => {
+            const isDropdownVisible = dropdownContent.style("display") === "block";
+            dropdownContent.style("display", isDropdownVisible ? "none" : "block");
+        });
+    const dropdownContent = filterContainer.append("div")
+        .attr("class", "dropdown-content")
+        .style("display", "none"); // Initially hidden
+
+    const relationshipTypes = Array.from(new Set(links.map(link => {
+            const sourceType = getNodeEntityType(link.source);
+            const targetType = getNodeEntityType(link.target);
+            return `${sourceType} ${link.relationship_type} ${targetType}`; 
+        })));
+    relationshipTypes.forEach(relationshipType => {
+        const filterItem = dropdownContent.append("div")
+            .attr("class", "filter-item");
+            filterItem.append("input")
+                .attr("type", "checkbox")
+                .attr("class", "checkbox")
+                .attr("id", relationshipType)
+                .property("checked", true)
+                .on("click", function() {
+                    toggleLinks(relationshipType)
+                    const isVisible = d3.select(this).classed("active");
+                    d3.select(this).classed("active", !isVisible);
+                            
+             });
+             filterItem.append("label")
+                .attr("for", relationshipType) 
+                .text(relationshipType);
+    });
+
 
     // Add date range slider.
     var slider = createD3RangeSlider(firstDate, lastDate, "#slider-container", true, 800);
@@ -253,25 +353,33 @@
     }
 
     function updateFilters() {
-        // Update node visibility based on type and year range
-        node.style("visibility", function(d) {
-            const typeVisible = filterState.entityTypes[d.entity_type];
-            const yearVisible = rangeOverlap(d.start_date, d.end_date, 
-                                             filterState.yearRange.start, filterState.yearRange.end);
-            return typeVisible && yearVisible ? "visible" : "hidden";
-        });
-
-        // Update link visibility based on the visibility of its source and target nodes
+        
         link.style("visibility", function(d) {
+
             const sourceVisible = filterState.entityTypes[d.source.entity_type] && 
                                   rangeOverlap(d.source.start_date, d.source.end_date, 
                                                filterState.yearRange.start, filterState.yearRange.end);
             const targetVisible = filterState.entityTypes[d.target.entity_type] &&
                                   rangeOverlap(d.target.start_date, d.target.end_date, 
                                                filterState.yearRange.start, filterState.yearRange.end);
-
-            return sourceVisible && targetVisible ? "visible" : "hidden";
+            const sourceType = getNodeEntityType(d.source.id);
+            const targetType = getNodeEntityType(d.target.id);
+            const relationshipKey = sourceType + " " + d.relationship_type + " " + targetType;
+            linkTypeVisible = filterState.relationshipTypes[relationshipKey]
+            return sourceVisible && targetVisible && linkTypeVisible ? "visible" : "hidden";
         });
+        node.style("visibility", function(d) {
+            const typeVisible = filterState.entityTypes[d.entity_type];
+            const yearVisible = rangeOverlap(d.start_date, d.end_date, 
+                                             filterState.yearRange.start, filterState.yearRange.end);
+        
+            return typeVisible && yearVisible ?  "visible" : "hidden";
+        });
+
+    };
+    function getNodeEntityType(nodeId) {
+        const node = nodes.find(n => n.id === nodeId);
+        return node ? node.entity_type : '';
     };
 
     console.log(filterState);
@@ -281,6 +389,12 @@
         filterState.entityTypes[entityType] = !filterState.entityTypes[entityType];
         updateFilters();
     };    
+
+    function toggleLinks(relationshipType){ //, isVisible) {
+        // First, toggle the visibility of the links of the specified type.
+        filterState.relationshipTypes[relationshipType] = !filterState.relationshipTypes[relationshipType];
+        updateFilters();
+    }; 
 
     // Layout network.
     const simulation = d3.forceSimulation(nodes)
