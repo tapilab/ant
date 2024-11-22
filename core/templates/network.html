@@ -39,12 +39,32 @@
             top: 100px; /* Adjust the top position as needed */
             left: 5vw; /* Adjust the left position as needed */
             z-index: 500; /* Ensure the search input is above other elements */
-        }    
+        } 
+
+        /*new network commit*/
+        #network-container{ 
+            width: 100%; /* 90vw;*/
+            height: 90vh;
+        }
         #network {
             width: 100%; /* 90vw;*/
             height: 90vh; /* fraction of screen */
             background-color: whitesmoke; /* Optional: Add background color */
-        }       
+        }
+        #relayout-container {
+            position: absolute;
+            top: 10px; /* Adjust as needed */
+            right: 10px; /* Adjust as needed */
+            padding: 5px; 
+            border-radius: 10px; 
+            cursor: pointer; 
+        }
+         .button-relayout {
+            margin-right: 5px;
+            background-color: gray;
+            border-radius: 10px; 
+        }        
+
         #button-container {
             margin-bottom: 10px;
         }
@@ -197,7 +217,10 @@
         <!-- Network -->
         <div class="col-md-1"></div>
         <div class="col-md-8">
-            <svg id="network"></svg>
+            <div id="network-container">
+                <svg id="network"></svg>
+                <div id="relayout-container"></div>
+            </div>
         </div>
         <!-- Entity details -->
         <div class="col-md-3">
@@ -397,52 +420,98 @@
     }; 
 
     // Layout network.
-    const simulation = d3.forceSimulation(nodes)
-        .force("link", d3.forceLink(links).id(d => d.id).distance(100))
-        .force("charge", d3.forceManyBody().strength(-50)) // was -100
-        .force("center", d3.forceCenter(width / 2, height / 2));
+    function layoutNetwork(){
 
-    let tickCount = 0;
-    simulation.on("tick", () => {
-        tickCount++;
-        // Zoom out and refit every three iterations.
-        if (tickCount % 3 == 0) {
-            fitScreen();
+        nodes.forEach(node => {
+            delete node.x;
+            delete node.y;
+            delete node.vx; // Reset velocity in x direction
+            delete node.vy; // Reset velocity in y direction
+        });
+
+        const visibleLinks = links.filter(link=> {
+            const sourceVisible = filterState.entityTypes[link.source.entity_type] && 
+                                  rangeOverlap(link.source.start_date, link.source.end_date, 
+                                               filterState.yearRange.start, filterState.yearRange.end);
+            const targetVisible = filterState.entityTypes[link.target.entity_type] &&
+                                  rangeOverlap(link.target.start_date, link.target.end_date, 
+                                               filterState.yearRange.start, filterState.yearRange.end);
+            const sourceType = getNodeEntityType(link.source.id);
+            const targetType = getNodeEntityType(link.target.id);
+            const relationshipKey = sourceType + " " + link.relationship_type + " " + targetType;
+            linkTypeVisible = filterState.relationshipTypes[relationshipKey] 
+            return sourceVisible && targetVisible && linkTypeVisible;        
+
+        });
+        console.log("Links data structure:", links);
+        console.log("visible links length", visibleLinks.length);
+
+        const simulation = d3.forceSimulation(nodes)
+
+        if (visibleLinks.length == 0) { // when network is initially created
+            const simulation = d3.forceSimulation(nodes)
+                .force("link", d3.forceLink(links).id(d => d.id).distance(100))
+                .force("charge", d3.forceManyBody().strength(-50)) // was -100
+                .force("center", d3.forceCenter(width / 2, height / 2))
+                .alpha(1);
         }
-        link
-            .attr("x1", d => d.source.x)
-            .attr("y1", d => d.source.y)
-            .attr("x2", d => d.target.x)
-            .attr("y2", d => d.target.y);
 
-        node
-            .attr("cx", d => d.x)
-            .attr("cy", d => d.y);
-    })
-    .on('end', function() {
-        console.log('simulation end!!');
-        fitScreen();
-    });
+        else{
+            const simulation = d3.forceSimulation(nodes)
+                .force("link", d3.forceLink(visibleLinks).id(d => d.id).distance(100))
+                .force("charge", d3.forceManyBody().strength(-50)) // was -100
+                .force("center", d3.forceCenter(width / 2, height / 2))
+                .alpha(1);
+        }
 
-    // Zoom out and center.
-    function fitScreen() {
-        const searchTerm = getQueryParam("search");
-        if (searchTerm != null) {
-            filterNodes(searchTerm.trim());
-        } else {
-            var bounds = network_group.node().getBBox();
-            var centerX = bounds.x + bounds.width / 2;
-            var centerY = bounds.y + bounds.height / 2;
-            var scale = Math.min(width / bounds.width, height / bounds.height) * 1.10;
-            var translateX = width / 2 - centerX * scale;
-            var translateY = height / 2 - centerY * scale;
+        let tickCount = 0;
+        simulation.on("tick", () => {
+            tickCount++;
+            // Zoom out and refit every three iterations.
+            if (tickCount % 3 == 0) {
+                fitScreen();
+            }
+            link
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
 
-            svg.transition().duration(500).call(
-                zoom.transform,
-                d3.zoomIdentity.translate(translateX, translateY).scale(scale)
-            );
+            node
+                .attr("cx", d => d.x)
+                .attr("cy", d => d.y);
+        })
+
+        .on('end', function() {
+            console.log('simulation end!!');
+            fitScreen();
+        });
+
+        // Zoom out and center.
+        function fitScreen() {
+            const searchTerm = getQueryParam("search");
+            if (searchTerm != null) {
+                filterNodes(searchTerm.trim());
+            } else {
+                var bounds = network_group.node().getBBox();
+                var centerX = bounds.x + bounds.width / 2;
+                var centerY = bounds.y + bounds.height / 2;
+                var scale = Math.min(width / bounds.width, height / bounds.height) * 1.10;
+                var translateX = width / 2 - centerX * scale;
+                var translateY = height / 2 - centerY * scale;
+
+                svg.transition().duration(500).call(
+                    zoom.transform,
+                    d3.zoomIdentity.translate(translateX, translateY).scale(scale)
+                );
+            }
         }
     }
+    const relayoutContainer = d3.select("#relayout-container");
+    const relayoutButton = relayoutContainer.append("button")
+        .text("Update Layout")
+        .attr("class", "button active")
+        .on("click", () => layoutNetwork());
 
     // Tooltip
     function showTooltip(event, d) {
@@ -643,7 +712,8 @@
             const searchQuery = $(this).val().trim();
             filterNodes(searchQuery);
         });
-    });        
+    }); 
+    layoutNetwork();       
     updateFilters();
 
 </script>
