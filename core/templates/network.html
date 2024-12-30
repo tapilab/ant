@@ -332,6 +332,31 @@
         .attr("class", "dropdown-content")
         .style("display", "none"); // Initially hidden
 
+    const selectContainer = dropdownContent.append("div")
+        .attr("class", "button-container");
+
+    selectContainer.append("button")
+        .attr("class", "select-all")
+        .text("Select All")
+        .on("click", () => {
+            dropdownContent.selectAll(".checkbox")
+                .property("checked", true)
+                .each(function() {
+                    toggleLinks(this.id, true); // Ensure all links are visible
+                });
+        });
+
+    selectContainer.append("button")
+        .attr("class", "deselect-all")
+        .text("Deselect All")
+        .on("click", () => {
+            dropdownContent.selectAll(".checkbox")
+                .property("checked", false)
+                .each(function() {
+                    toggleLinks(this.id, false); // Ensure all links are hidden
+                });
+        });
+
     const relationshipTypes = Array.from(new Set(links.map(link => {
             const sourceType = getNodeEntityType(link.source);
             const targetType = getNodeEntityType(link.target);
@@ -585,6 +610,11 @@
         event.stopPropagation();                
     }
 
+
+
+// Space for link highlighting
+/*
+*/
     // Fetch html of entity details.
     function node2html(node, callback) {
         // Return html content for this entity.
