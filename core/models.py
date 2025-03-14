@@ -89,6 +89,17 @@ class Relationship(models.Model):
     target_entity = models.ForeignKey(Entity, related_name='target_relationship_set', on_delete=models.CASCADE, blank=False, null=False)    
 
 
+class Location(models.Model):
+    key = models.TextField()
+    name = models.TextField()
+    latitude = models.FloatField(null=True)
+    longitude = models.FloatField(null=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.latitude}, {self.longitude})"
+
+
+
 class GoogleSheet(models.Model):
     url = models.TextField()
 

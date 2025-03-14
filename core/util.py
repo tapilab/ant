@@ -30,6 +30,24 @@ def get_about(sheets, warnings):
         abouts = About(blurb='') # if data frame is empty
     abouts.save()
 
+def get_locations(sheets, warnings):
+    location_df = get_sheet_by_name(sheets, 'Location')
+    locations = defaultdict(lambda: {})
+    if location_df is not None and location_df.empty == False:
+        for _, r in location_df.iterrows():
+            loc = Location(
+                key=r.Key,
+                name=r.Name,
+                latitude=r.Latitude,
+                longitude=r.Longitude
+            )
+            loc.save()
+            locations[r['Key']] = loc
+
+    return locations
+
+
+
 def get_customizations(sheets, warnings):
     """
    Sets user customizations, ie Title, subtitle, etc
@@ -65,6 +83,7 @@ def get_ignore_case(row, field):
         return None
     else:
         return str(row[c[0]]).strip()
+
 
 def create_entity_types(sheets, warnings):
     entity_types_df = get_sheet_by_name(sheets, 'Entities')
@@ -307,15 +326,23 @@ def import_from_google_sheet(url):
         warnings = []
         db = DB()
         db.entity_types = create_entity_types(sheets, warnings)
+       # print(db.entity_types)
         db.relationship_types = create_relationship_types(sheets, db, warnings)
         # db.relationship_types
         db.fields = create_fields(sheets, db, warnings)
         db.entities = create_entities(sheets, db, warnings)
         db.relationships = create_relationships(sheets, db, warnings)
-        print('entities')
-
+        print(db.relationships)
+       # print('entities')
+        db.locations = get_locations(sheets, warnings)
+        #print(db.locations)
         get_customizations(sheets, warnings)
         get_about(sheets, warnings)
+        #test_location = get_locations(sheets, warnings)
+       # for key, loc in locations.items():
+           #  print(f"Key: {key}, Location: {loc}")
+        
+
         Network(compressed_json=gzip.compress(db2json())).save()
         return True, "Success! " + '<br>Warnings:<br>>>>' + '<br>>>> '.join(warnings) if len(warnings) > 0 else ''
     except Exception as e:

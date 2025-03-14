@@ -12,6 +12,7 @@ from .models import *
 from .tasks import import_data
 from .util import import_from_google_sheet
 
+from django.shortcuts import render, get_object_or_404
 
 def register(request):
     if User.objects.exists():
@@ -179,3 +180,49 @@ def network(request):
     return render(request, 'network.html',
         {'network_json': obj.get_json() if obj else '{}',
          'customizations': get_customizations()})
+
+def location(request):
+
+    # Get all entities
+    entities = Entity.objects.all().prefetch_related('values')
+
+    # Get all relationships
+    all_relationships = Relationship.objects.all().select_related('source_entity', 'target_entity', 'relationship_type')
+
+    # Get the EntityType for Locations
+    location_type = EntityType.objects.get(name="Location")
+
+    # Filter relationships where the target is a Location
+    location_relationships = []
+    
+    for rel in all_relationships:
+        if rel.relationship_type.target_entity_type == location_type:
+            location_entity = rel.target_entity  # The location entity
+            try:
+                location = Location.objects.filter(key=location_entity.key).first()
+                latitude = location.latitude
+                longitude = location.longitude
+   
+            except Location.DoesNotExist:
+                latitude = None
+                longitude = None
+
+            # Ensure location has latitude and longitude
+            latitude = getattr(location, 'latitude', None)
+            longitude = getattr(location, 'longitude', None)
+
+            location_relationships.append({
+                "source_entity_key": rel.source_entity.key,
+                "source_entity_name": rel.source_entity.name,
+                "source_entity_type": rel.source_entity.entity_type.name,
+                "relationship_type": rel.relationship_type.name,
+                "location_key": location.key,
+                "latitude": latitude,
+                "longitude": longitude
+            })
+
+    return render(request, 'location.html', {
+        "entities": entities,
+        "location_relationships": location_relationships
+    })
+

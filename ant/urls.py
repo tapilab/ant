@@ -25,6 +25,7 @@ urlpatterns = [
     path("entities/", core.views.entities, name="entities"),
     path("entity/", core.views.entity, name="entity"),
     path("network/", core.views.network, name="network"),
+    path("location/", core.views.location, name="location"),
     path("about/", core.views.about, name="about"),
     path('register/', core.views.register, name='register'),
     path('user_login/', core.views.user_login, name='user_login'),
