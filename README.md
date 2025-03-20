@@ -4,6 +4,8 @@ ANT is a library designed to enable humanities scholars to create interactive, d
 
 For a demo, see [https://www.artisticnetworktoolkit.org/](http://artisticnetworktoolkit.org/).
 
+To upload and explore your own data, use the [ANT Sandbox website](https://ant-sandbox-22f7f5795405.herokuapp.com/)
+
 ## Features
 
 
@@ -21,7 +23,9 @@ interactive interface to explore artistic connections | search and filter by key
 
 ## Quickstart
 
-To create a new website based on ANT using your own artistic dataset, please follow the steps below:
+To create a new website based on ANT using your own artistic dataset, please follow the steps below.
+
+If you are not ready to setup a Heroku account, you can instead upload your spreadsheet to the [ANT Sandbox website](https://ant-sandbox-22f7f5795405.herokuapp.com/), which is temporary site to host and visualize your data for exploratory purposes.
 
 1. Copy the [Ant Template](https://docs.google.com/spreadsheets/d/1_8s2AoH53qPSzP2bNYMtFqfsp6Y8E91laCpQ9v83hYw/edit?usp=drive_link) Google Sheet to your Google Drive (`File->Make a Copy`)
 2. Follow the instructions in the Template to populate a relational database.
