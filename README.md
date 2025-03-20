@@ -2,7 +2,10 @@
 
 ANT is a library designed to enable humanities scholars to create interactive, dynamic network visualizations with no coding or database expertise.
 
-For a demo, see [https://www.artisticnetworktoolkit.org/](http://artisticnetworktoolkit.org/).
+Demos:
+- [Raphael's Workshop](https://www.artisticnetworktoolkit.org/](http://artisticnetworktoolkit.org/)
+- [Chinese Export Markets](https://ant-china-8056b1db5341.herokuapp.com/network/)
+- [Viceregal Americals](https://ant-spain-a79dfce9f9cd.herokuapp.com/network/)
 
 To upload and explore your own data, use the [ANT Sandbox website](https://ant-sandbox-22f7f5795405.herokuapp.com/)
 
