@@ -1,4 +1,4 @@
-# ANT: Artistic Network Toolbox
+# ANT: Artistic Network Toolkit
 
 ANT is a library designed to enable humanities scholars to create interactive, dynamic network visualizations with no coding or database expertise.
 
