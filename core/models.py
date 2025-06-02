@@ -63,6 +63,11 @@ class Entity(models.Model):
     key = models.TextField()
     name = models.TextField()    
     image_url = models.TextField(null=True)
+    image_urls = models.JSONField(
+                    default=list, 
+                    blank=True,
+                    help_text="List of image urls for carousel"
+                    )    
     start_date = models.TextField(null=True)
     end_date = models.TextField(null=True)
     values = models.ManyToManyField(Value)

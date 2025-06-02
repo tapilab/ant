@@ -171,6 +171,7 @@ def entity(request):
     return render(request, 'entity.html',
                     {'entity_type': entity_type,
                      'entity': entity,
+                     'images': entity.image_urls,
                      'relationships': relationships,
                      'customizations': get_customizations()}) 
 

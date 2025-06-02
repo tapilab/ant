@@ -66,6 +66,22 @@ def get_ignore_case(row, field):
     else:
         return str(row[c[0]]).strip()
 
+def rm_trailing_digit(s):
+    return re.sub(r'\.[0-9]+$', '', s)
+
+def get_carousel_images(row, field):
+    if pd.isnull(field) or field.strip()=='':
+        return None
+    c = [i for i in row.index if rm_trailing_digit(i).lower().strip()==field.lower().strip()]
+    print('columns=', c)
+    if len(c) == 0 or c[0] not in row.index or pd.isnull(row[c[0]]):
+        print('empty for ', row.name)
+        return []
+    else:
+        vals = [str(row[ci]).strip() for ci in c]
+        print('vals=', vals)
+        return vals
+
 def create_entity_types(sheets, warnings):
     entity_types_df = get_sheet_by_name(sheets, 'Entities')
     validate_entity_type_columns(entity_types_df)
@@ -189,6 +205,7 @@ def create_entities(sheets, db, warnings):
                             key=key,
                             name=name,
                             image_url=get_ignore_case(row, entity_type.image_field_name),
+                            image_urls=get_carousel_images(row, entity_type.image_field_name),
                             start_date=get_ignore_case(row, entity_type.start_date_field_name),
                             end_date=get_ignore_case(row, entity_type.end_date_field_name)
                             )
@@ -274,6 +291,7 @@ def db2json():
             'entity_type': e.entity_type.name,
             'color': none2str(e.entity_type.color),
             'image_url': none2str(e.image_url),
+            'image_urls': [none2str(i) for i in e.image_urls],
             'start_date': none2str(e.start_date),
             'end_date': none2str(e.end_date),
         })
