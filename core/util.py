@@ -73,13 +73,10 @@ def get_carousel_images(row, field):
     if pd.isnull(field) or field.strip()=='':
         return None
     c = [i for i in row.index if rm_trailing_digit(i).lower().strip()==field.lower().strip()]
-    print('columns=', c)
     if len(c) == 0 or c[0] not in row.index or pd.isnull(row[c[0]]):
-        print('empty for ', row.name)
         return []
     else:
-        vals = [str(row[ci]).strip() for ci in c]
-        print('vals=', vals)
+        vals = [str(row[ci]).strip() for ci in c if not pd.isnull(row[ci])]
         return vals
 
 def create_entity_types(sheets, warnings):
