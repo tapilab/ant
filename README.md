@@ -52,3 +52,4 @@ This project is supported by the National Endowment for the Humanities under Dig
     <td><img src="https://communications.tulane.edu/sites/default/files/pictures/TU.CTR_2c.png" width=200/></td>
   </tr>
 </table>
+
