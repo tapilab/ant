@@ -7,12 +7,19 @@
 virtualenv ant-v
 source ant-v/bin/activate
 ```
-3. Install requirements
+3. brew install openssl
+4. Create .env file with settings for:
+  - DJANGO_SETTINGS_MODULE=ant.settings
+  - REDISCLOUD_URL=[..]
+  - OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES 
+5. Install requirements
 ```
 cd ant
 pip install -r requirements.txt
 ```
+6. Setup postgres
 
+   
 ## Deploying locally
 
 ```
