@@ -8,6 +8,7 @@ Demos:
 - [Raphael's Workshop](http://artisticnetworktoolkit.org/)
 - [Chinese Export Markets](https://ant-china-8056b1db5341.herokuapp.com/network/)
 - [Viceregal Americals](https://ant-spain-a79dfce9f9cd.herokuapp.com/network/)
+- [Saving Faces](https://savingfaces-5241518fe90b.herokuapp.com/network/)
 
 Paper: 
 - [Culotta, AR and Culotta, AW (2025). Artistic Network Toolkit (ANT): Democratizing Network Modeling in Art Historical Scholarship. DHQ: Digital Humanities Quarterly, 19(2).](https://dhq.digitalhumanities.org/vol/19/2/000777/000777.html)
